@@ -156,10 +156,12 @@ namespace mizjam1.Actors
             }
             if (Collidable && Speed.LengthSquared() > 0)
             {
-                if (!Collide(Position + Speed * delta)) {
+                if (!Collide(Position + Speed * delta))
+                {
                     Position += Speed * delta;
                 }
-            } else
+            }
+            else
             {
                 Position += Speed * delta;
             }

@@ -1,9 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using mizjam1.Actors;
 using mizjam1.Helpers;
+using mizjam1.Sound;
 using mizjam1.UI;
 using MonoGame.Extended;
 using MonoGame.Extended.Sprites;
@@ -15,15 +17,14 @@ using System.Linq;
 
 namespace mizjam1.Scenes
 {
-    internal class MapScene : IScene
+    internal class MapScene : Scene
     {
         internal GameWindow Window;
         internal GraphicsDevice GraphicsDevice;
         internal ContentManager Content;
         internal SpriteBatch SpriteBatch;
         internal OrthographicCamera Camera;
-        internal ViewportAdapter ViewportAdapter;
-        internal int GridSize = 20;
+        internal int GridSize = 40;
         internal TextureRegion2D[,] Floor;
         internal Texture2D Tileset;
 
@@ -31,22 +32,33 @@ namespace mizjam1.Scenes
         internal List<Actor> AddedActors;
         internal List<Actor> RemovedActors;
         internal Player Player;
+        internal Vector2 LastCameraPos;
 
         internal HUD HUD;
 
-        public void Initialize(GameWindow window, GraphicsDevice graphicsDevice, ContentManager content)
+        public override void Initialize(GameWindow window, GraphicsDevice graphicsDevice, ContentManager content)
         {
             Window = window;
             GraphicsDevice = graphicsDevice;
             SpriteBatch = new SpriteBatch(GraphicsDevice);
-            ViewportAdapter = new WindowViewportAdapter(Window, GraphicsDevice);
-            Camera = new OrthographicCamera(ViewportAdapter)
-            {
-                Zoom = 4
+            //ViewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, 240, 240 * 9 / 10);
+            ViewportAdapter = new DefaultViewportAdapter(GraphicsDevice);
+            Camera = new OrthographicCamera(ViewportAdapter) {
+                Zoom = 2
             };
+            Window.ClientSizeChanged += (s, e) => ViewportAdapter.Reset();
+
             Content = content;
             Tileset = Content.Load<Texture2D>("tileset");
 
+            var dirt = Content.Load<SoundEffect>("dirt");
+            SoundPlayer.Instance.Init(
+                Content.Load<SoundEffect>("dirt"),
+                Content.Load<SoundEffect>("water_pick"),
+                Content.Load<SoundEffect>("water_drop"),
+                Content.Load<SoundEffect>("pick"),
+                Content.Load<SoundEffect>("cut")
+                );
             Actors = new List<Actor>();
             AddedActors = new List<Actor>();
             RemovedActors = new List<Actor>();
@@ -61,12 +73,22 @@ namespace mizjam1.Scenes
             {
                 numbers.Add(new TextureRegion2D(numbersTexture, 16 * i, 0, 16, 16));
             }
+            var bordersTexture = Content.Load<Texture2D>("borders");
+            var borders = new TextureRegion2D[3, 3];
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    borders[i, j] = new TextureRegion2D(bordersTexture, 16 * i, 16 * j, 16, 16);
+                }
+            }
             HUD = new HUD(Player, Camera)
             {
                 Numbers = numbers,
                 Carrot = new TextureRegion2D(Tileset, 16 * 7, 0, 16, 16),
                 WaterEmpty = new TextureRegion2D(Tileset, 16 * 5, 0, 16, 16),
                 WaterFull = new TextureRegion2D(Tileset, 16 * 6, 0, 16, 16),
+                Borders = borders
             };
         }
         internal void AddActor(Actor actor, bool instantly = false)
@@ -149,6 +171,8 @@ namespace mizjam1.Scenes
                 Collidable = true
             };
             AddActor(Player, instantly);
+            var center = ViewportAdapter.BoundingRectangle.Center;
+            LastCameraPos = -Player.Position * Camera.Zoom + new Vector2(center.X, center.Y);
         }
 
         internal void CreateCrop(Vector2 position, bool instantly = false)
@@ -209,7 +233,7 @@ namespace mizjam1.Scenes
             AddActor(particle, instantly);
         }
 
-        public void Update(GameTime gameTime)
+        public override void Update(GameTime gameTime)
         {
             Input.Update(Keyboard.GetState());
             Actors.AddRange(AddedActors);
@@ -219,17 +243,22 @@ namespace mizjam1.Scenes
             Actors.RemoveAll(a => RemovedActors.Contains(a));
 
             RemovedActors.Clear();
-            var camPos = Player.Position;
-
-            Camera.LookAt(camPos);
+            SoundPlayer.Instance.Play();
         }
-        public void Draw(GameTime gameTime)
+        public override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
+
+
+
             var transformMatrix = Camera.GetViewMatrix();
+            var center = ViewportAdapter.BoundingRectangle.Center;
+            var pos = -Player.Position * Camera.Zoom + new Vector2(center.X, center.Y);
+            pos = pos * 0.05f + LastCameraPos * 0.95f;
+            transformMatrix.Translation = new Vector3(pos, 0);
+            LastCameraPos = pos;
             SpriteBatch.Begin(transformMatrix: transformMatrix, samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.FrontToBack);
             var screenZero = Camera.ScreenToWorld(Vector2.Zero);
-            HUD.Draw(SpriteBatch);
             for (int i = 0; i < GridSize; i++)
             {
                 for (int j = 0; j < GridSize; j++)
@@ -241,11 +270,10 @@ namespace mizjam1.Scenes
             Actors.ForEach(a => a.Draw(SpriteBatch));
 
             SpriteBatch.End();
-        }
 
-        public void SizeChanged(int width, int height)
-        {
-            ViewportAdapter.Reset();
+            SpriteBatch.Begin(samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.FrontToBack);
+                HUD.Draw(SpriteBatch);
+            SpriteBatch.End();
         }
     }
 }

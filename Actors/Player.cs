@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using mizjam1.Helpers;
+using mizjam1.Sound;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,7 @@ namespace mizjam1.Actors
             foreach(Carrot c in Scene.Actors.Where(c => c is Carrot carrot && carrot.CanBeCollected() && (c.Position - Position).LengthSquared() < Size * Size))
             {
                 Scene.CreatePickUpParticle(c.Position);
+                SoundPlayer.Instance.Play("PICK");
                 Seeds++;
                 Scene.RemoveActor(c);
             }
@@ -74,6 +76,8 @@ namespace mizjam1.Actors
             }
             HasWater = true;
             Scene.CreateSplashParticle(well.Position);
+
+            SoundPlayer.Instance.Play("WATERPICK");
             return true;
         }
         private bool DoCropActions(Crop crop)
@@ -83,6 +87,7 @@ namespace mizjam1.Actors
                 var intPos = Position / Size;
                 var position = new Vector2((float)(Size * Math.Round(intPos.X)), (float)(Size * Math.Round(intPos.Y)));
                 Scene.CreateCrop(position);
+                SoundPlayer.Instance.Play("DIRT");
                 return true;
             }
             if (Seeds > 0 && crop.Watered && !crop.Seeded)
@@ -90,6 +95,7 @@ namespace mizjam1.Actors
                 crop.Seeded = true;
 
                 Scene.CreateSeedParticle(crop.Position);
+                SoundPlayer.Instance.Play("DIRT");
                 Seeds--;
                 return true;
             }
@@ -98,6 +104,8 @@ namespace mizjam1.Actors
                 crop.Watered = true;
 
                 Scene.CreateSplashParticle(crop.Position);
+
+                SoundPlayer.Instance.Play("WATERDROP");
                 HasWater = false;
                 return true;
             }
@@ -108,6 +116,8 @@ namespace mizjam1.Actors
                 crop.Seeded = false;
                 crop.Growth = 0;
                 crop.GrowthTimer = 0;
+
+                SoundPlayer.Instance.Play("CUT");
                 for (int _ = 0; _ < 4; _++)
                 {
                     Scene.CreateCarrot(crop.Position);
@@ -126,6 +136,8 @@ namespace mizjam1.Actors
             //Seeds++;
             Scene.RemoveActor(bush);
             Scene.CreateCarrot(bush.Position);
+
+            SoundPlayer.Instance.Play("CUT");
             return true;
         }
 

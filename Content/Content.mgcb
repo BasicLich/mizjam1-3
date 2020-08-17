@@ -13,6 +13,30 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin borders.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:borders.png
+
+#begin cut.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:cut.wav
+
+#begin dirt.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:dirt.wav
+
 #begin numbers.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -25,6 +49,12 @@
 /processorParam:TextureFormat=Color
 /build:numbers.png
 
+#begin pick.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:pick.wav
+
 #begin tileset.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -36,4 +66,16 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:tileset.png
+
+#begin water_drop.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:water_drop.wav
+
+#begin water_pick.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:water_pick.wav
 

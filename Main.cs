@@ -8,7 +8,7 @@ namespace mizjam1
     public class Main : Game
     {
         private GraphicsDeviceManager _graphics;
-        internal IScene Scene;
+        internal Scene Scene;
         internal int Width, Height;
         internal bool Resizing;
 
@@ -20,19 +20,7 @@ namespace mizjam1
             Window.AllowUserResizing = true;
 
             _graphics.PreferredBackBufferWidth = 960;
-            _graphics.PreferredBackBufferHeight = 768;
-
-            Window.ClientSizeChanged += Window_ClientSizeChanged;
-        
-        }
-
-        private void Window_ClientSizeChanged(object sender, System.EventArgs e)
-        {
-            _graphics.PreferredBackBufferWidth = Window.ClientBounds.Width;
-            _graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
-            _graphics.ApplyChanges();
-            
-            Scene?.SizeChanged(Window.ClientBounds.Width, Window.ClientBounds.Height);
+            _graphics.PreferredBackBufferHeight = 960 * 9 / 10;        
         }
 
         protected override void Initialize()
@@ -41,6 +29,8 @@ namespace mizjam1
 
             Scene.Initialize(Window, GraphicsDevice, Content);
             base.Initialize();
+
+            Scene.ViewportAdapter.Reset();
         }
 
         protected override void LoadContent()
