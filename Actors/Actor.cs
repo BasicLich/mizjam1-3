@@ -36,6 +36,8 @@ namespace mizjam1.Actors
         internal bool Controllable = false;
         internal bool Interactive = false;
         internal bool Collidable = false;
+        internal int CollisionGroup = 1;
+        internal int CollidesWith = 1;
 
         internal bool Left, Right, Up, Down;
 
@@ -165,15 +167,38 @@ namespace mizjam1.Actors
             {
                 Position += Speed * delta;
             }
+            CheckBounds();
         }
+
+        internal void CheckBounds()
+        {
+            if (Position.X < 0)
+            {
+                Position.X = 0;
+            }
+            if (Position.Y < 0)
+            {
+                Position.Y = 0;
+            }
+            if (Position.X > Scene.TileSize * (Scene.GridSize - 1))
+            {
+                Position.X = Scene.TileSize * (Scene.GridSize - 1);
+            }
+            if (Position.Y > Scene.TileSize * (Scene.GridSize - 1))
+            {
+                Position.Y = Scene.TileSize * (Scene.GridSize - 1);
+            }
+        }
+
         internal bool Collide(Vector2 position)
         {
             var collided = false;
-            foreach (var actor in Scene.Actors.Where(a => a.Collidable && a != this))
+
+            foreach (var actor in Scene.Actors.Where(a => a.Collidable && ((a.CollisionGroup & CollidesWith) > 0) && a != this))
             {
                 var diff = actor.Position - position;
                 var dist2 = diff.LengthSquared();
-                var radiiSum = (actor.Size / 2) + (Size / 2);
+                var radiiSum = (actor.Size * 0.5f) + (Size * 0.5f);
                 if (dist2 > radiiSum * radiiSum)
                 {
                     continue;
@@ -182,8 +207,8 @@ namespace mizjam1.Actors
                 var distanceToMove = radiiSum - dist;
                 diff.Normalize();
                 Position = position - diff * distanceToMove;
-                Speed.X = 0;
-                Speed.Y = 0;
+                Speed.X *= -0.05f;
+                Speed.Y *= -0.05f;
                 collided = true;
             }
             return collided;

@@ -8,6 +8,7 @@ using mizjam1.Helpers;
 using mizjam1.Sound;
 using mizjam1.UI;
 using MonoGame.Extended;
+using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.Sprites;
 using MonoGame.Extended.TextureAtlases;
 using MonoGame.Extended.ViewportAdapters;
@@ -24,7 +25,8 @@ namespace mizjam1.Scenes
         internal ContentManager Content;
         internal SpriteBatch SpriteBatch;
         internal OrthographicCamera Camera;
-        internal int GridSize = 40;
+        internal int GridSize = 32;
+        internal int TileSize = 16;
         internal TextureRegion2D[,] Floor;
         internal Texture2D Tileset;
 
@@ -33,9 +35,9 @@ namespace mizjam1.Scenes
         internal List<Actor> RemovedActors;
         internal Player Player;
         internal Vector2 LastCameraPos;
-
+        internal BitmapFont Font;
         internal HUD HUD;
-
+        internal Dungeon Dungeon;
         public override void Initialize(GameWindow window, GraphicsDevice graphicsDevice, ContentManager content)
         {
             Window = window;
@@ -43,7 +45,8 @@ namespace mizjam1.Scenes
             SpriteBatch = new SpriteBatch(GraphicsDevice);
             //ViewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, 240, 240 * 9 / 10);
             ViewportAdapter = new DefaultViewportAdapter(GraphicsDevice);
-            Camera = new OrthographicCamera(ViewportAdapter) {
+            Camera = new OrthographicCamera(ViewportAdapter)
+            {
                 Zoom = 2
             };
             Window.ClientSizeChanged += (s, e) => ViewportAdapter.Reset();
@@ -59,6 +62,10 @@ namespace mizjam1.Scenes
                 Content.Load<SoundEffect>("pick"),
                 Content.Load<SoundEffect>("cut")
                 );
+
+
+            Dungeon = new Dungeon(GridSize);
+
             Actors = new List<Actor>();
             AddedActors = new List<Actor>();
             RemovedActors = new List<Actor>();
@@ -66,12 +73,14 @@ namespace mizjam1.Scenes
             CreateBushes(true);
             CreateWell(true);
             CreateFloor(true);
+            CreateTrees(true);
+
             var numbersTexture = Content.Load<Texture2D>("numbers");
 
             var numbers = new List<TextureRegion2D>();
             for (int i = 0; i < 10; i++)
             {
-                numbers.Add(new TextureRegion2D(numbersTexture, 16 * i, 0, 16, 16));
+                numbers.Add(new TextureRegion2D(numbersTexture, TileSize * i, 0, TileSize, TileSize));
             }
             var bordersTexture = Content.Load<Texture2D>("borders");
             var borders = new TextureRegion2D[3, 3];
@@ -79,18 +88,24 @@ namespace mizjam1.Scenes
             {
                 for (int j = 0; j < 3; j++)
                 {
-                    borders[i, j] = new TextureRegion2D(bordersTexture, 16 * i, 16 * j, 16, 16);
+                    borders[i, j] = new TextureRegion2D(bordersTexture, TileSize * i, TileSize * j, TileSize, TileSize);
                 }
             }
             HUD = new HUD(Player, Camera)
             {
                 Numbers = numbers,
-                Carrot = new TextureRegion2D(Tileset, 16 * 7, 0, 16, 16),
-                WaterEmpty = new TextureRegion2D(Tileset, 16 * 5, 0, 16, 16),
-                WaterFull = new TextureRegion2D(Tileset, 16 * 6, 0, 16, 16),
+                Carrot = new TextureRegion2D(Tileset, TileSize * 7, 0, TileSize, TileSize),
+                WaterEmpty = new TextureRegion2D(Tileset, TileSize * 5, 0, TileSize, TileSize),
+                WaterFull = new TextureRegion2D(Tileset, TileSize * 6, 0, TileSize, TileSize),
                 Borders = borders
             };
+            for (int i = 0; i < 8; i++)
+            {
+                CreateCarrot(new Vector2(0, 0), true);
+            }
+            Font = Content.Load<BitmapFont>("font");
         }
+        #region CREATORS
         internal void AddActor(Actor actor, bool instantly = false)
         {
             actor.Scene = this;
@@ -119,18 +134,45 @@ namespace mizjam1.Scenes
             {
                 for (int j = 0; j < GridSize; j++)
                 {
-                    var x = (int)(RandomHelper.NextFloat() * 5);
-                    Floor[i, j] = new TextureRegion2D(Tileset, 16 * x, 16 * 4, 16, 16);
+                    var x = 0;
+                    if (!Dungeon.Grid[i, j])
+                    {
+                        x = Math.Max(0, (int)(RandomHelper.NextFloat() * 8) - 3);
+                    }
+                    Floor[i, j] = new TextureRegion2D(Tileset, TileSize * x, TileSize * 4, TileSize, TileSize);
                 }
             }
         }
-
+        internal void CreateTrees(bool instantly = false)
+        {
+            for (int i = 0; i < GridSize; i++)
+            {
+                for (int j = 0; j < GridSize; j++)
+                {
+                    if (!Dungeon.Grid[i, j])
+                    {
+                        continue;
+                    }
+                    var x = (int)(RandomHelper.NextFloat() * 4) + 3;
+                    var Tree = new Actor
+                    {
+                        Position = new Vector2(TileSize * i, TileSize * j),
+                        Sprite = new Sprite(new TextureRegion2D(Tileset, TileSize * x, TileSize * 3, TileSize, TileSize)) { Depth = 0.7f, OriginNormalized = Vector2.Zero },
+                        Collidable = true,
+                        Size = TileSize - 1,
+                        CollisionGroup = 0b11,
+                        CollidesWith = 0b00,
+                    };
+                    AddActor(Tree, instantly);
+                }
+            }
+        }
         internal void CreateWell(bool instantly = false)
         {
             var well = new Well()
             {
-                Position = new Vector2(16, 16),
-                Sprite = new Sprite(new TextureRegion2D(Tileset, 16 * 0, 16 * 5, 16, 16))
+                Position = new Vector2(TileSize, TileSize),
+                Sprite = new Sprite(new TextureRegion2D(Tileset, TileSize * 0, TileSize * 5, TileSize, TileSize))
                 {
                     OriginNormalized = Vector2.Zero,
                     Depth = 0.6f,
@@ -145,10 +187,19 @@ namespace mizjam1.Scenes
         {
             for (int _ = 0; _ < 20; _++)
             {
+                int y;
+                int x;
+                do
+                {
+                    x = (int)(GridSize * RandomHelper.NextFloat());
+                    y = (int)(GridSize * RandomHelper.NextFloat());
+                } while (Dungeon.Grid[x, y]);
+
+                var pos = new Vector2(TileSize * x, TileSize * y);
                 var bush = new Bush
                 {
-                    Position = new Vector2(16 * (int)(GridSize * RandomHelper.NextFloat()), 16 * (int)(GridSize * RandomHelper.NextFloat())),
-                    Sprite = new Sprite(new TextureRegion2D(Tileset, 16 * (int)(RandomHelper.NextFloat() * 3), 16 * 3, 16, 16))
+                    Position = pos,
+                    Sprite = new Sprite(new TextureRegion2D(Tileset, TileSize * (int)(RandomHelper.NextFloat() * 3), TileSize * 3, TileSize, TileSize))
                     {
                         OriginNormalized = Vector2.Zero,
                         Depth = 0.6f,
@@ -163,16 +214,17 @@ namespace mizjam1.Scenes
         {
             Player = new Player
             {
-                Position = new Vector2(0, 0),
+                Position = new Vector2(TileSize * (GridSize - 1), TileSize * (GridSize - 1)),
                 Animations = Animation.GetPigAnimation(Tileset),
                 Moveable = true,
                 Controllable = true,
                 Animated = true,
-                Collidable = true
+                Collidable = true,
+                CollisionGroup = 0b01,
+                CollidesWith = 0b01,
             };
             AddActor(Player, instantly);
-            var center = ViewportAdapter.BoundingRectangle.Center;
-            LastCameraPos = -Player.Position * Camera.Zoom + new Vector2(center.X, center.Y);
+            LastCameraPos = GetCameraPosition();
         }
 
         internal void CreateCrop(Vector2 position, bool instantly = false)
@@ -190,7 +242,7 @@ namespace mizjam1.Scenes
 
         internal void CreateCarrot(Vector2 position, bool instantly = false)
         {
-            var sprite = new Sprite(new TextureRegion2D(Tileset, 16 * 7, 16 * 0, 16, 16))
+            var sprite = new Sprite(new TextureRegion2D(Tileset, TileSize * 7, TileSize * 0, TileSize, TileSize))
             {
                 OriginNormalized = Vector2.Zero,
                 Depth = 0.6f,
@@ -232,6 +284,51 @@ namespace mizjam1.Scenes
             };
             AddActor(particle, instantly);
         }
+        #endregion
+
+        private Vector2 GetCameraPosition()
+        {
+            var center = ViewportAdapter.BoundingRectangle.Center;
+            var localPos = Player.Position;
+            var camPos = -localPos * Camera.Zoom + new Vector2(center.X, center.Y);
+
+            float rightSide = (-GridSize * TileSize * Camera.Zoom) + center.X * 2;
+            if (ViewportAdapter.BoundingRectangle.Width > GridSize * TileSize * Camera.Zoom)
+            {
+                camPos.X = rightSide / 2;
+            }
+            else
+            {
+                if (camPos.X > 0)
+                {
+                    camPos.X = 0;
+                }
+
+                if (camPos.X < rightSide)
+                {
+                    camPos.X = rightSide;
+                }
+            }
+
+            float bottomSide = (-GridSize * TileSize * Camera.Zoom) + center.Y * 2;
+            if (ViewportAdapter.BoundingRectangle.Height > GridSize * TileSize * Camera.Zoom)
+            {
+                camPos.Y = bottomSide / 2;
+            }
+            else
+            {
+                if (camPos.Y > 0)
+                {
+                    camPos.Y = 0;
+                }
+
+                if (camPos.Y < bottomSide)
+                {
+                    camPos.Y = bottomSide;
+                }
+            }
+            return camPos;
+        }
 
         public override void Update(GameTime gameTime)
         {
@@ -249,11 +346,10 @@ namespace mizjam1.Scenes
         {
             GraphicsDevice.Clear(Color.Black);
 
-
-
             var transformMatrix = Camera.GetViewMatrix();
             var center = ViewportAdapter.BoundingRectangle.Center;
-            var pos = -Player.Position * Camera.Zoom + new Vector2(center.X, center.Y);
+
+            var pos = GetCameraPosition();
             pos = pos * 0.05f + LastCameraPos * 0.95f;
             transformMatrix.Translation = new Vector3(pos, 0);
             LastCameraPos = pos;
@@ -263,7 +359,7 @@ namespace mizjam1.Scenes
             {
                 for (int j = 0; j < GridSize; j++)
                 {
-                    SpriteBatch.Draw(Floor[i, j], new Vector2(i * 16, j * 16), Color.White, 0, Vector2.Zero, Vector2.One, SpriteEffects.None, 0);
+                    SpriteBatch.Draw(Floor[i, j], new Vector2(i * TileSize, j * TileSize), Color.White, 0, Vector2.Zero, Vector2.One, SpriteEffects.None, 0);
                 }
             }
 
@@ -272,7 +368,7 @@ namespace mizjam1.Scenes
             SpriteBatch.End();
 
             SpriteBatch.Begin(samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.FrontToBack);
-                HUD.Draw(SpriteBatch);
+            HUD.Draw(SpriteBatch);
             SpriteBatch.End();
         }
     }

@@ -131,7 +131,7 @@ namespace mizjam1.Helpers
                         new Sprite(new TextureRegion2D(texture, 16 * 5, 16 * 5, 16, 16)) { OriginNormalized = origin, Depth = depth },
                         new Sprite(new TextureRegion2D(texture, 16 * 6, 16 * 5, 16, 16)) { OriginNormalized = origin, Depth = depth },
                     },
-                    1 / 60f,
+                    0.5f / 60f,
                     false)
                 },
             };
@@ -151,7 +151,7 @@ namespace mizjam1.Helpers
                         new Sprite(new TextureRegion2D(texture, 16 * 5, 16 * 6, 16, 16)) { OriginNormalized = origin, Depth = depth },
                         new Sprite(new TextureRegion2D(texture, 16 * 6, 16 * 6, 16, 16)) { OriginNormalized = origin, Depth = depth },
                     },
-                    1 / 60f,
+                    0.5f / 60f,
                     false)
                 },
             };
@@ -171,7 +171,7 @@ namespace mizjam1.Helpers
                         new Sprite(new TextureRegion2D(texture, 16 * 5, 16 * 7, 16, 16)) { OriginNormalized = origin, Depth = depth },
                         new Sprite(new TextureRegion2D(texture, 16 * 6, 16 * 7, 16, 16)) { OriginNormalized = origin, Depth = depth },
                     },
-                    1 / 60f,
+                    0.5f / 60f,
                     false)
                 },
             };

@@ -12,5 +12,9 @@ namespace mizjam1.Helpers
         {
             return (float)Random.NextDouble();
         }
+        public static bool NextBool(float chance = 0.5f)
+        {
+            return Random.NextDouble() < chance;
+        }
     }
 }

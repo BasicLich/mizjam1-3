@@ -27,6 +27,9 @@ namespace mizjam1.Actors
             Interactive = true;
             Sprite = sprite;
             SpeedZ = 10;
+            CollisionGroup = 0b100;
+            CollidesWith = 0b010;
+            Collidable = true;
         }
         internal bool CanBeCollected()
         {
@@ -56,6 +59,14 @@ namespace mizjam1.Actors
                 Position.Y = 2 * MathF.Sin(Counter) + TruePosition.Y;
                 Counter += delta * 3;
             }
+            if (Collidable && SpeedZ > 0)
+            {
+                if (!Collide(Position + Speed * delta))
+                {
+                    Position += Speed * delta;
+                }
+            }
+            CheckBounds();
         }
     }
 }

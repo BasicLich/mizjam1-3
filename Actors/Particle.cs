@@ -9,7 +9,7 @@ namespace mizjam1.Actors
     internal class Particle : Actor
     {
         internal float Timer;
-        internal float Time = 0.6f;
+        internal float Time = 0.3f;
 
         internal override void Update(GameTime gameTime)
         {
