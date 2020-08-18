@@ -1,12 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace mizjam1.Helpers
 {
     internal class MathHelpers
     {
+        
         internal static Vector2 ClosestPointOnLine(float lx1, float ly1, float lx2, float ly2, float x0, float y0)
         {
             float A1 = ly2 - ly1;

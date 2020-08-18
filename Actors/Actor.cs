@@ -207,8 +207,8 @@ namespace mizjam1.Actors
                 var distanceToMove = radiiSum - dist;
                 diff.Normalize();
                 Position = position - diff * distanceToMove;
-                Speed.X *= -0.05f;
-                Speed.Y *= -0.05f;
+                Speed.X *= -0.5f;
+                Speed.Y *= -0.5f;
                 collided = true;
             }
             return collided;

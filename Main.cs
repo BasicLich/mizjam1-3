@@ -18,7 +18,6 @@ namespace mizjam1
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
-
             _graphics.PreferredBackBufferWidth = 960;
             _graphics.PreferredBackBufferHeight = 960 * 9 / 10;        
         }
@@ -48,7 +47,10 @@ namespace mizjam1
                 Scene = new MapScene();
                 Scene.Initialize(Window, GraphicsDevice, Content);
             }
-
+            if (Keyboard.GetState().IsKeyDown(Keys.F12))
+            {
+                _graphics.ToggleFullScreen();
+            }
             Scene.Update(gameTime);
             base.Update(gameTime);
         }
