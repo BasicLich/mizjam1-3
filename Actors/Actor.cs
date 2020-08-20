@@ -48,6 +48,8 @@ namespace mizjam1.Actors
         internal bool CanShoot = false;
         internal bool Shooting = false;
 
+        internal bool Healing = false;
+
         internal Actor CollidedWith;
 
         internal bool Left, Right, Up, Down;
@@ -91,6 +93,14 @@ namespace mizjam1.Actors
             {
                 Animate(delta);
             }
+            if (Healing)
+            {
+                Heal();
+            }
+        }
+        internal virtual void Heal()
+        {
+
         }
         internal virtual void Shoot()
         {

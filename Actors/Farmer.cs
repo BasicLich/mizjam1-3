@@ -159,32 +159,33 @@ namespace mizjam1.Actors
         }
         internal override void AIControl(float delta)
         {
-            if (IsChicken || !Chunk.HasPlayer())
+            if (!Chunk.HasPlayer())
             {
                 RandomControl(delta);
             }
             else
             {
-                Up = false;
-                Down = false;
-                Left = false;
-                Right = false;
+                var defaultPress = IsChicken;
+                Up = defaultPress;
+                Down = defaultPress;
+                Left = defaultPress;
+                Right = defaultPress;
                 var margin = Size / 2;
                 if (Scene.Player.Position.X > Position.X + margin)
                 {
-                    Right = true;
+                    Right = !defaultPress;
                 }
                 else if (Scene.Player.Position.X < Position.X - margin)
                 {
-                    Left = true;
+                    Left = !defaultPress;
                 }
                 if (Scene.Player.Position.Y > Position.Y + margin)
                 {
-                    Down = true;
+                    Down = !defaultPress;
                 }
                 else if (Scene.Player.Position.Y < Position.Y - margin)
                 {
-                    Up = true;
+                    Up = !defaultPress;
                 }
             }
         }

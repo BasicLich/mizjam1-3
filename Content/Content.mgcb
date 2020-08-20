@@ -10,7 +10,6 @@
 
 #-------------------------------- References --------------------------------#
 
-/reference:..\bin\Debug\netcoreapp3.1\MonoGame.Extended.Content.Pipeline.dll
 
 #---------------------------------- Content ---------------------------------#
 
@@ -43,11 +42,6 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:dirt.wav
-
-#begin font.fnt
-/importer:BitmapFontImporter
-/processor:BitmapFontProcessor
-/build:font.fnt
 
 #begin font_0.png
 /importer:TextureImporter

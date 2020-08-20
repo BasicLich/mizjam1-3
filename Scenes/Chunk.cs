@@ -30,7 +30,7 @@ namespace mizjam1.Scenes
         internal bool Up, Down, Left, Right;
         internal int NBushes = 5;
 
-        internal Chunk(MapScene scene, Point position, bool createPlayer, bool spawnWell, bool hasShipPart, int shipPart, bool up, bool left, bool right, bool down, int gridSize, int tileSize)
+        internal Chunk(MapScene scene, Point position, bool createPlayer, bool hasShipPart, int shipPart, bool up, bool left, bool right, bool down, int gridSize, int tileSize)
         {
             Scene = scene;
             Position = position;
@@ -51,7 +51,7 @@ namespace mizjam1.Scenes
                 CreatePlayer(true);
             }
             CreateBushes(true);
-            if (spawnWell)
+            if (createPlayer)
             {
                 CreateWell(true);
             }
@@ -61,9 +61,13 @@ namespace mizjam1.Scenes
             {
                 CreateShipPart(FindEmptyPosition(), shipPart, true);
             }
-            CreateFarmer(true);
-            CreateFarmer(true);
-            CreateFarmer(true);
+            if (!createPlayer)
+            {
+                for (int i = 0; i < 2 + RandomHelper.NextFloat() * 4; i++)
+                {
+                    CreateFarmer(true);
+                }
+            }
         }
 
 

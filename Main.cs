@@ -14,16 +14,20 @@ namespace mizjam1
 
         public Main()
         {
+            Window.AllowUserResizing = true;
+
             _graphics = new GraphicsDeviceManager(this);
+
+
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
-            Window.AllowUserResizing = true;
-            _graphics.PreferredBackBufferWidth = 960;
-            _graphics.PreferredBackBufferHeight = 960 * 9 / 10;        
         }
 
         protected override void Initialize()
         {
+            _graphics.PreferredBackBufferWidth = 544;
+            _graphics.PreferredBackBufferHeight = 544 + 64;
+            _graphics.ApplyChanges();
             Scene = new MapScene();
 
             Scene.Initialize(Window, GraphicsDevice, Content);

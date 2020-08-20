@@ -94,7 +94,7 @@ namespace mizjam1.Scenes
             var wellChunk = new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize));
             var shipParts = new List<Point>
             {
-                new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
+                CurrentChunk,
                 new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
                 new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
                 new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
@@ -106,7 +106,6 @@ namespace mizjam1.Scenes
                 {
                     var p = new Point(i, j);
                     bool spawnPlayer = p == CurrentChunk;
-                    bool spawnWell = p == wellChunk;
                     bool up = j > 0;
                     bool left = i > 0;
                     bool right = i < ChunkSize - 1;
@@ -118,7 +117,7 @@ namespace mizjam1.Scenes
                     {
                         shipPart = shipParts.IndexOf(p);
                     }
-                    Chunks[i, j] = new Chunk(this, new Point(i, j), spawnPlayer, spawnWell, hasShipPart, shipPart, up, left, right, down, GridSize, TileSize);
+                    Chunks[i, j] = new Chunk(this, new Point(i, j), spawnPlayer, hasShipPart, shipPart, up, left, right, down, GridSize, TileSize);
                     chunkList.Add(Chunks[i, j]);
                 }
             }
@@ -266,7 +265,7 @@ namespace mizjam1.Scenes
                 HUD.Draw(SpriteBatch);
                 if (IsGameOver)
                 {
-                    
+                    //TODO Add game over screen
                 }
             SpriteBatch.End();
         }

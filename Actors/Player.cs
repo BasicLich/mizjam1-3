@@ -15,13 +15,13 @@ namespace mizjam1.Actors
     {
         internal bool DoInteraction;
         internal bool DoShipAction;
-        internal bool HasWater = true;
-        internal int Carrots = 999;
+        internal bool HasWater;
+        internal int Carrots;
         internal bool Teleporting;
         internal bool CanTeleport = true;
         internal float TeleportCooldownTimer = 0;
         internal float TeleportCooldownTime = 2;
-        internal bool[] ShipParts = new bool[4] { true, true, true, true };
+        internal bool[] ShipParts = new bool[4];
         internal bool[] ShipPartsAdded = new bool[4];
 
         internal int MaxHealth = 4;
@@ -73,8 +73,20 @@ namespace mizjam1.Actors
             Interaction();
             ShipAction();
         }
+        internal override void Heal()
+        {
+            if (Carrots >= 4 && Health < MaxHealth)
+            {
+                Carrots -= 4;
+                Health++;
+                Healing = false;
+                Scene.CreateSeedParticle(Position);
+                //TODO: Add sound
+            }
+            SoundPlayer.Instance.Play("PIG");
 
-        private void Interaction()
+        }
+        internal void Interaction()
         {
             if (!DoInteraction)
             {
@@ -244,7 +256,7 @@ namespace mizjam1.Actors
         }
         internal override void Shoot()
         {
-            if (Speed.LengthSquared() > 0 && Carrots > 0)
+            if (Speed.LengthSquared() > Size && Carrots > 0)
             {
                 Scene.GetCurrentChunk().CreateBullet();
                 SoundPlayer.Instance.Play("LASER");
@@ -257,6 +269,7 @@ namespace mizjam1.Actors
             DoInteraction = Input.IsKeyJustPressed(Keys.K);
             DoShipAction = Input.IsKeyJustPressed(Keys.L);
             Shooting = Input.IsKeyJustPressed(Keys.J);
+            Healing = Input.IsKeyJustPressed(Keys.H);
         }
         
     }
