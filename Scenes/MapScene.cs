@@ -25,26 +25,27 @@ namespace mizjam1.Scenes
         internal ContentManager Content;
         internal SpriteBatch SpriteBatch;
         internal OrthographicCamera Camera;
-
+        internal int ChunkSize = 5;
         internal int GridSize = 32;
         internal int TileSize = 16;
         internal TextureRegion2D[,] Floor;
         internal Texture2D Tileset;
 
-        internal List<Actor> Actors;
-        internal List<Actor> AddedActors;
-        internal List<Actor> RemovedActors;
-        internal Player Player;
+
+        internal Chunk[,] Chunks;
+        internal Point CurrentChunk;
         internal Vector2 LastCameraPos;
-        internal Dungeon Dungeon;
+
+        internal Player Player;
         internal BitmapFont Font;
         internal HUD HUD;
+        internal bool IsGameOver;
         public override void Initialize(GameWindow window, GraphicsDevice graphicsDevice, ContentManager content)
         {
             Window = window;
             GraphicsDevice = graphicsDevice;
             SpriteBatch = new SpriteBatch(GraphicsDevice);
-            //ViewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, 240, 240 * 9 / 10);
+
             ViewportAdapter = new DefaultViewportAdapter(GraphicsDevice);
             Camera = new OrthographicCamera(ViewportAdapter)
             {
@@ -61,20 +62,14 @@ namespace mizjam1.Scenes
                 Content.Load<SoundEffect>("water_pick"),
                 Content.Load<SoundEffect>("water_drop"),
                 Content.Load<SoundEffect>("pick"),
-                Content.Load<SoundEffect>("cut")
+                Content.Load<SoundEffect>("cut"),
+                Content.Load<SoundEffect>("chicken"),
+                Content.Load<SoundEffect>("pig"),
+                Content.Load<SoundEffect>("laser")
+
                 );
 
 
-            Dungeon = new Dungeon(GridSize);
-
-            Actors = new List<Actor>();
-            AddedActors = new List<Actor>();
-            RemovedActors = new List<Actor>();
-            CreatePlayer(true);
-            CreateBushes(true);
-            CreateWell(true);
-            CreateFloor(true);
-            CreateTrees(true);
 
             var numbersTexture = Content.Load<Texture2D>("numbers");
 
@@ -92,321 +87,200 @@ namespace mizjam1.Scenes
                     borders[i, j] = new TextureRegion2D(bordersTexture, TileSize * i, TileSize * j, TileSize, TileSize);
                 }
             }
-            HUD = new HUD(Player, Camera)
+            Chunks = new Chunk[ChunkSize, ChunkSize];
+            var chunkList = new List<Chunk>();
+
+            CurrentChunk = new Point((int) (RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize));
+            var wellChunk = new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize));
+            var shipParts = new List<Point>
+            {
+                new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
+                new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
+                new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
+                new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
+            };
+
+            for (int i = 0; i < ChunkSize; i++)
+            {
+                for (int j = 0; j < ChunkSize; j++)
+                {
+                    var p = new Point(i, j);
+                    bool spawnPlayer = p == CurrentChunk;
+                    bool spawnWell = p == wellChunk;
+                    bool up = j > 0;
+                    bool left = i > 0;
+                    bool right = i < ChunkSize - 1;
+                    bool down = j < ChunkSize - 1;
+
+                    bool hasShipPart = shipParts.Contains(p);
+                    int shipPart = -1;
+                    if (hasShipPart)
+                    {
+                        shipPart = shipParts.IndexOf(p);
+                    }
+                    Chunks[i, j] = new Chunk(this, new Point(i, j), spawnPlayer, spawnWell, hasShipPart, shipPart, up, left, right, down, GridSize, TileSize);
+                    chunkList.Add(Chunks[i, j]);
+                }
+            }
+            foreach (var chunk in chunkList)
+            {
+                if (chunk.Up)
+                {
+                    var next = chunk.Position + new Point(0, -1);
+                    var nextChunk = Chunks[next.X, next.Y];
+                    var teleporter = new Teleporter
+                    {
+                        Position = new Vector2(chunk.Dungeon.OpeningLocations[0].X * TileSize, chunk.Dungeon.OpeningLocations[0].Y * TileSize),
+                        Chunk = next,
+                        ChunkPosition = new Vector2(nextChunk.Dungeon.OpeningLocations[2].X * TileSize, (nextChunk.Dungeon.OpeningLocations[2].Y - 1) * TileSize)
+                    };
+                    chunk.AddActor(teleporter, true);
+                }
+                if (chunk.Down)
+                {
+                    var next = chunk.Position + new Point(0, 1);
+                    var nextChunk = Chunks[next.X, next.Y];
+                    var teleporter = new Teleporter
+                    {
+                        Position = new Vector2(chunk.Dungeon.OpeningLocations[2].X * TileSize, chunk.Dungeon.OpeningLocations[2].Y * TileSize),
+                        Chunk = next,
+                        ChunkPosition = new Vector2(nextChunk.Dungeon.OpeningLocations[0].X * TileSize, (nextChunk.Dungeon.OpeningLocations[0].Y + 1) * TileSize)
+                    };
+                    chunk.AddActor(teleporter, true);
+                }
+                if (chunk.Left)
+                {
+                    var next = chunk.Position + new Point(-1, 0);
+                    var nextChunk = Chunks[next.X, next.Y];
+                    var teleporter = new Teleporter
+                    {
+                        Position = new Vector2(chunk.Dungeon.OpeningLocations[3].X * TileSize, chunk.Dungeon.OpeningLocations[3].Y * TileSize),
+                        Chunk = next,
+                        ChunkPosition = new Vector2((nextChunk.Dungeon.OpeningLocations[1].X - 1) * TileSize, nextChunk.Dungeon.OpeningLocations[1].Y * TileSize)
+                    };
+                    chunk.AddActor(teleporter, true);
+                }
+                if (chunk.Right)
+                {
+                    var next = chunk.Position + new Point(1, 0);
+                    var nextChunk = Chunks[next.X, next.Y];
+                    var teleporter = new Teleporter
+                    {
+                        Position = new Vector2(chunk.Dungeon.OpeningLocations[1].X * TileSize, chunk.Dungeon.OpeningLocations[1].Y * TileSize),
+                        Chunk = next,
+                        ChunkPosition = new Vector2((nextChunk.Dungeon.OpeningLocations[3].X + 1) * TileSize, nextChunk.Dungeon.OpeningLocations[3].Y * TileSize)
+                    };
+                    chunk.AddActor(teleporter, true);
+                }
+            }
+
+            Player = GetCurrentChunk().Player;
+
+            Font = Content.Load<BitmapFont>("font");
+
+            HUD = new HUD(Player, Camera, window)
             {
                 Numbers = numbers,
                 Carrot = new TextureRegion2D(Tileset, TileSize * 7, 0, TileSize, TileSize),
                 WaterEmpty = new TextureRegion2D(Tileset, TileSize * 5, 0, TileSize, TileSize),
                 WaterFull = new TextureRegion2D(Tileset, TileSize * 6, 0, TileSize, TileSize),
-                Borders = borders
+                HeartFull = new TextureRegion2D(Tileset, TileSize * 4, 0, TileSize, TileSize),
+                HeartHalf = new TextureRegion2D(Tileset, TileSize * 3, 0, TileSize, TileSize),
+                HeartEmpty = new TextureRegion2D(Tileset, TileSize * 2, 0, TileSize, TileSize),
+                Borders = borders,
+                Font = Font
             };
 
-            Font = Content.Load<BitmapFont>("font");
         }
+
+        internal void GameOver()    
+        {
+            IsGameOver = true;
+        }
+
         #region CREATORS
         internal void AddActor(Actor actor, bool instantly = false)
         {
-            actor.Scene = this;
-            if (instantly)
-            {
-                Actors.Add(actor);
-            }
-            else
-            {
-                AddedActors.Add(actor);
-            }
+
+            GetCurrentChunk().AddActor(actor, instantly);
         }
         internal void RemoveActor(Actor actor)
         {
-            RemovedActors.Add(actor);
-        }
-        internal List<Actor> GetActors(Type type)
-        {
-            return Actors.Where(a => a.GetType() == type).ToList();
-        }
-        internal void CreateFloor(bool instantly = false)
-        {
-            Floor = new TextureRegion2D[GridSize, GridSize];
-
-            for (int i = 0; i < GridSize; i++)
-            {
-                for (int j = 0; j < GridSize; j++)
-                {
-                    Floor[i, j] = new TextureRegion2D(Tileset, TileSize * 0, TileSize * 4, TileSize, TileSize);
-                }
-            }
-            foreach (var p in Dungeon.SafePoints)
-            {
-                var x = Math.Max(0, (int)(RandomHelper.NextFloat() * 20) - 15);
-                Floor[p.X, p.Y] = new TextureRegion2D(Tileset, TileSize * x, TileSize * 4, TileSize, TileSize);
-            }
-        }
-        internal void CreateTrees(bool instantly = false)
-        {
-            for (int i = 0; i < GridSize; i++)
-            {
-                for (int j = 0; j < GridSize; j++)
-                {
-                    if (Dungeon.SafePoints.Contains(new Point(i, j)))
-                    {
-                        continue;
-                    }
-                    var x = (int)(RandomHelper.NextFloat() * 4) + 3;
-                    var Tree = new Actor
-                    {
-                        Position = new Vector2(TileSize * i, TileSize * j),
-                        Sprite = new Sprite(new TextureRegion2D(Tileset, TileSize * x, TileSize * 3, TileSize, TileSize)) { Depth = 0.7f, OriginNormalized = Vector2.Zero },
-                        Collidable = true,
-                        Size = TileSize - 6,
-                        CollisionGroup = 0b11,
-                        CollidesWith = 0b00,
-                    };
-                    AddActor(Tree, instantly);
-                }
-            }
-        }
-        internal void CreateWell(bool instantly = false)
-        {
-            var well = new Well()
-            {
-                Position = FindEmptyPosition(true),
-                Sprite = new Sprite(new TextureRegion2D(Tileset, TileSize * 0, TileSize * 5, TileSize, TileSize))
-                {
-                    OriginNormalized = Vector2.Zero,
-                    Depth = 0.6f,
-                },
-                Collidable = true,
-                Interactive = true
-            };
-            AddActor(well, instantly);
-        }
-
-        internal void CreateBushes(bool instantly = false)
-        {
-            for (int _ = 0; _ < 20; _++)
-            {
-                Vector2 pos = FindEmptyPosition();
-                var bush = new Bush
-                {
-                    Position = pos,
-                    Sprite = new Sprite(new TextureRegion2D(Tileset, TileSize * (int)(RandomHelper.NextFloat() * 3), TileSize * 3, TileSize, TileSize))
-                    {
-                        OriginNormalized = Vector2.Zero,
-                        Depth = 0.6f,
-                    },
-                    Interactive = true
-                };
-                AddActor(bush, instantly);
-            }
-        }
-
-        private Vector2 FindEmptyPosition(bool centered = false)
-        {
-            Vector2 pos;
-            if (centered && Dungeon.SafePoints.Any(p => p.X > GridSize / 4 && p.X < GridSize * 3 / 4 && p.Y > GridSize / 4 && p.Y < GridSize * 3 / 4))
-            {
-                var p = Dungeon.SafePoints.Where(p => p.X > GridSize / 4 && p.X < GridSize * 3 / 4 && p.Y > GridSize / 4 && p.Y < GridSize * 3 / 4).GetRandom();
-                pos = new Vector2(TileSize * p.X, TileSize * p.Y);
-            }
-            else if (Dungeon.SafePoints.Any())
-            {
-                var p = Dungeon.SafePoints.GetRandom();
-                pos = new Vector2(TileSize * p.X, TileSize * p.Y);
-                //Dungeon.SafePoints.Remove(p);
-            }
-            else
-            {
-
-                int y;
-                int x;
-                do
-                {
-                    x = (int)(GridSize * RandomHelper.NextFloat());
-                    y = (int)(GridSize * RandomHelper.NextFloat());
-                } while (Dungeon.Grid[x, y] && !Actors.Any(a => a.Position.X == x * TileSize && a.Position.Y * TileSize == y));
-
-                pos = new Vector2(TileSize * x, TileSize * y);
-            }
-
-            return pos;
-        }
-
-        internal void CreatePlayer(bool instantly = false)
-        {
-            Player = new Player
-            {
-                Position = FindEmptyPosition(),
-                Animations = Animation.GetPigAnimation(Tileset),
-                Moveable = true,
-                Controllable = true,
-                Animated = true,
-                Collidable = true,
-                CollisionGroup = 0b01,
-                CollidesWith = 0b01,
-            };
-            AddActor(Player, instantly);
-            LastCameraPos = GetCameraPosition();
+            GetCurrentChunk().RemovedActors.Add(actor);
         }
 
         internal void CreateCrop(Vector2 position, bool instantly = false)
         {
-            var crop = new Crop
-            {
-                Position = position,
-                AnimationState = "UNWATERED",
-                Animations = Animation.GetCropAnimation(Tileset),
-                Animated = true,
-                Interactive = true
-            };
-            AddActor(crop, instantly);
+            GetCurrentChunk().CreateCrop(position, instantly);
         }
 
         internal void CreateCarrot(Vector2 position, bool instantly = false)
         {
-            var sprite = new Sprite(new TextureRegion2D(Tileset, TileSize * 7, TileSize * 0, TileSize, TileSize))
-            {
-                OriginNormalized = Vector2.Zero,
-                Depth = 0.6f,
-            };
-            var carrot = new Carrot(position, sprite);
-            AddActor(carrot, instantly);
+            GetCurrentChunk().CreateCarrot(position, instantly);
         }
 
         internal void CreateSplashParticle(Vector2 position, bool instantly = false)
         {
-            position.Y -= 8;
-            var particle = new Particle
-            {
-                Position = position,
-                Animations = Animation.GetSplashAnimation(Tileset),
-                Animated = true
-            };
-            AddActor(particle, instantly);
+            GetCurrentChunk().CreateSplashParticle(position, instantly);
         }
         internal void CreateSeedParticle(Vector2 position, bool instantly = false)
         {
-            position.Y -= 8;
-            var particle = new Particle
-            {
-                Position = position,
-                Animations = Animation.GetSeedAnimation(Tileset),
-                Animated = true
-            };
-            AddActor(particle, instantly);
+            GetCurrentChunk().CreateSeedParticle(position, instantly);
         }
 
         internal void CreatePickUpParticle(Vector2 position, bool instantly = false)
         {
-            var particle = new Particle
-            {
-                Position = position,
-                Animations = Animation.GetPickUpAnimation(Tileset),
-                Animated = true
-            };
-            AddActor(particle, instantly);
+            GetCurrentChunk().CreatePickUpParticle(position, instantly);
         }
         #endregion
 
-        private Vector2 GetCameraPosition()
+        internal List<Actor> GetActors()
         {
-            var center = ViewportAdapter.BoundingRectangle.Center;
-            var localPos = Player.Position;
-            var camPos = -localPos * Camera.Zoom + new Vector2(center.X, center.Y);
-
-            float rightSide = (-GridSize * TileSize * Camera.Zoom) + center.X * 2;
-            if (ViewportAdapter.BoundingRectangle.Width > GridSize * TileSize * Camera.Zoom)
-            {
-                camPos.X = rightSide / 2;
-            }
-            else
-            {
-                if (camPos.X > 0)
-                {
-                    camPos.X = 0;
-                }
-
-                if (camPos.X < rightSide)
-                {
-                    camPos.X = rightSide;
-                }
-            }
-
-            float bottomSide = (-GridSize * TileSize * Camera.Zoom) + center.Y * 2;
-            if (ViewportAdapter.BoundingRectangle.Height > GridSize * TileSize * Camera.Zoom)
-            {
-                camPos.Y = bottomSide / 2;
-            }
-            else
-            {
-                if (camPos.Y > 0)
-                {
-                    camPos.Y = 0;
-                }
-
-                if (camPos.Y < bottomSide)
-                {
-                    camPos.Y = bottomSide;
-                }
-            }
-            return camPos;
+            return GetCurrentChunk().Actors;
+        }
+        internal Chunk GetCurrentChunk()
+        {
+            return Chunks[CurrentChunk.X, CurrentChunk.Y];
         }
 
         public override void Update(GameTime gameTime)
         {
             Input.Update(Keyboard.GetState());
-            Actors.AddRange(AddedActors);
-            AddedActors.Clear();
+            if (!IsGameOver)
+            {
+                GetCurrentChunk().Update(gameTime);
+                //TODO Update Crops and Farmers in all chunks
+            }
 
-            Actors.ForEach(a => a.Update(gameTime));
-            Actors.RemoveAll(a => RemovedActors.Contains(a));
-
-            RemovedActors.Clear();
             SoundPlayer.Instance.Play();
         }
         public override void Draw(GameTime gameTime)
         {
+            
+
             GraphicsDevice.Clear(Color.Black);
 
-            var transformMatrix = Camera.GetViewMatrix();
-            var center = ViewportAdapter.BoundingRectangle.Center;
-
-            var pos = GetCameraPosition();
-            pos = pos * 0.05f + LastCameraPos * 0.95f;
-            transformMatrix.Translation = new Vector3(pos, 0);
-            LastCameraPos = pos;
-            SpriteBatch.Begin(transformMatrix: transformMatrix, samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.FrontToBack);
-            var screenZero = Camera.ScreenToWorld(Vector2.Zero);
-            for (int i = 0; i < GridSize; i++)
-            {
-                for (int j = 0; j < GridSize; j++)
-                {
-                    SpriteBatch.Draw(Floor[i, j], new Vector2(i * TileSize, j * TileSize), Color.White, 0, Vector2.Zero, Vector2.One, SpriteEffects.None, 0);
-                }
-            }
-            var arrow = new TextureRegion2D(Tileset, 7 * TileSize, 2 * TileSize, TileSize, TileSize);
-            for (int i = 0; i < 4; i++)
-            {
-                if (Dungeon.Openings[i])
-                {
-                    SpriteBatch.Draw(arrow,
-                        new Vector2(
-                            Dungeon.OpeningLocations[i].X * TileSize + TileSize / 2,
-                            Dungeon.OpeningLocations[i].Y * TileSize + TileSize / 2),
-                        Color.White,
-                        (MathF.PI / 2) * i,
-                        Vector2.One * TileSize / 2,
-                        Vector2.One,
-                        SpriteEffects.None,
-                        1);
-                }
-            }
-            Actors.ForEach(a => a.Draw(SpriteBatch));
-
-            SpriteBatch.End();
+            GetCurrentChunk().Draw(SpriteBatch);
 
             SpriteBatch.Begin(samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.FrontToBack);
-            HUD.Draw(SpriteBatch);
+                HUD.Draw(SpriteBatch);
+                if (IsGameOver)
+                {
+                    
+                }
             SpriteBatch.End();
+        }
+
+        internal void TeleportTo(Point chunk, Vector2 position)
+        {
+            GetCurrentChunk().Player = null;
+            Player.Position = position;
+            Player.Teleporting = true;
+            GetCurrentChunk().RemoveActor(Player);
+            CurrentChunk = chunk;
+            GetCurrentChunk().Player = Player;
+            GetCurrentChunk().AddActor(Player);
+            LastCameraPos = GetCurrentChunk().GetCameraPosition();
         }
     }
 }

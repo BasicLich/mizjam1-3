@@ -18,11 +18,15 @@ namespace mizjam1.Actors
         internal float Counter = 0;
         internal float CollectingTimer = 0;
         internal float CollectingTime = 1;
-        internal Collectable(Vector2 position, Sprite sprite)
+        internal Collectable(Vector2 position, Sprite sprite, bool initialSpeed = true)
         {
             Position = position;
             TruePosition = position;
-            Speed = new Vector2(RandomHelper.NextFloat() - 0.5f, RandomHelper.NextFloat() - 0.5f) * 200;
+            if (initialSpeed)
+            {
+                Speed = new Vector2(RandomHelper.NextFloat() - 0.5f, RandomHelper.NextFloat() - 0.5f) * 200;
+            }
+
             Moveable = true;
             Interactive = true;
             Sprite = sprite;

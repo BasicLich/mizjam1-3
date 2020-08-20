@@ -13,6 +13,12 @@ namespace mizjam1.Helpers
         {
             return Math.Abs(own.X - other.X) + Math.Abs(own.Y - other.Y);
         }
+        internal static float Dist(this Vector2 own, Vector2 other)
+        {
+            var a = own.X - other.X;
+            var b = own.Y - other.Y;
+            return MathF.Sqrt(a * a + b * b);
+        }
         internal static float Dist(this Point own, Point other)
         {
             var a = own.X - other.X;

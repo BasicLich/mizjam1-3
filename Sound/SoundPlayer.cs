@@ -16,7 +16,7 @@ namespace mizjam1.Sound
         internal Dictionary<string, SoundEffectInstance> Current;
         internal Dictionary<string, int> CurrentNote;
         internal List<float> Scale;
-        public void Init(SoundEffect dirt, SoundEffect waterPick, SoundEffect waterDrop, SoundEffect pick, SoundEffect cut)
+        public void Init(SoundEffect dirt, SoundEffect waterPick, SoundEffect waterDrop, SoundEffect pick, SoundEffect cut, SoundEffect chicken, SoundEffect pig, SoundEffect laser)
         {
             Sounds = new Dictionary<string, SoundEffect>
             {
@@ -24,7 +24,10 @@ namespace mizjam1.Sound
                 ["WATERPICK"] = waterPick,
                 ["WATERDROP"] = waterDrop,
                 ["PICK"] = pick,
-                ["CUT"] = cut
+                ["CUT"] = cut,
+                ["CHICKEN"] = chicken,
+                ["PIG"] = pig,
+                ["LASER"] = laser,
             };
             Queues = new Dictionary<string, Queue<SoundEffectInstance>>
             {
@@ -33,7 +36,10 @@ namespace mizjam1.Sound
                 ["WATERPICK"] = new Queue<SoundEffectInstance>(),
                 ["WATERDROP"] = new Queue<SoundEffectInstance>(),
                 ["PICK"] = new Queue<SoundEffectInstance>(),
-                ["CUT"] = new Queue<SoundEffectInstance>()
+                ["CUT"] = new Queue<SoundEffectInstance>(),
+                ["CHICKEN"] = new Queue<SoundEffectInstance>(),
+                ["PIG"] = new Queue<SoundEffectInstance>(),
+                ["LASER"] = new Queue<SoundEffectInstance>()
             };
             Current = new Dictionary<string, SoundEffectInstance>
             {
@@ -42,6 +48,9 @@ namespace mizjam1.Sound
                 ["WATERDROP"] = null,
                 ["PICK"] = null,
                 ["CUT"] = null,
+                ["CHICKEN"] = null,
+                ["PIG"] = null,
+                ["LASER"] = null,
             };
             CurrentNote = new Dictionary<string, int>
             {
@@ -50,6 +59,9 @@ namespace mizjam1.Sound
                 ["WATERDROP"] = 0,
                 ["PICK"] = 0,
                 ["CUT"] = 0,
+                ["CHICKEN"] = 0,
+                ["PIG"] = 0,
+                ["LASER"] = 0,
             };
             Scale = new List<float>
             {
@@ -61,7 +73,7 @@ namespace mizjam1.Sound
                 1.68179f,
                 1.88775f,
                 2
-            };
+            };            
         }
         public void Play(string name)
         {

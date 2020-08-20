@@ -13,7 +13,7 @@ namespace mizjam1.Actors
         internal int Growth;
         internal int MaxGrowth = 2;
         internal float GrowthTimer;
-        internal float GrowthTime = 2;
+        internal float GrowthTime = 30;
 
         internal override void Update(GameTime gameTime)
         {

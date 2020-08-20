@@ -15,6 +15,8 @@ namespace mizjam1.Actors
     internal class Actor
     {
         internal MapScene Scene;
+        internal Chunk Chunk;
+
         internal Vector2 Position;
         internal Vector2 Speed;
         internal Vector2 Acceleration;
@@ -23,6 +25,7 @@ namespace mizjam1.Actors
         internal float WalkAcceleration = 100;
 
         internal Sprite Sprite;
+        internal float Rotation = 0;
 
         internal float Size = 16;
 
@@ -33,13 +36,22 @@ namespace mizjam1.Actors
 
         internal bool Moveable = false;
         internal bool Animated = false;
+        internal bool PlayerControllable = false;
         internal bool Controllable = false;
         internal bool Interactive = false;
         internal bool Collidable = false;
+        internal bool DestroyOnCollision = false;
+
         internal int CollisionGroup = 1;
         internal int CollidesWith = 1;
 
+        internal bool CanShoot = false;
+        internal bool Shooting = false;
+
+        internal Actor CollidedWith;
+
         internal bool Left, Right, Up, Down;
+
 
         internal void Remove()
         {
@@ -51,24 +63,45 @@ namespace mizjam1.Actors
             float delta = gameTime.GetElapsedSeconds();
             if (Controllable)
             {
+
+                if (PlayerControllable)
+                {
+                    Left = Input.IsKeyDown(Keys.A);
+                    Right = Input.IsKeyDown(Keys.D);
+                    Up = Input.IsKeyDown(Keys.W);
+                    Down = Input.IsKeyDown(Keys.S);
+                }
+                else
+                {
+                    AIControl(delta);
+                }
+
                 Control();
+
             }
             if (Moveable)
             {
                 Physics(delta);
+            }
+            if (CanShoot && Shooting)
+            {
+                Shoot();
             }
             if (Animated)
             {
                 Animate(delta);
             }
         }
+        internal virtual void Shoot()
+        {
 
+        }
+        internal virtual void AIControl(float delta)
+        {
+
+        }
         internal virtual void Control()
         {
-            Left = Input.IsKeyDown(Keys.A);
-            Right = Input.IsKeyDown(Keys.D);
-            Up = Input.IsKeyDown(Keys.W);
-            Down = Input.IsKeyDown(Keys.S);
 
             if (Left)
             {
@@ -122,6 +155,11 @@ namespace mizjam1.Actors
                 SetAnimation("IDLE");
             }
 
+            GetNextSprite(delta);
+        }
+
+        internal void GetNextSprite(float delta)
+        {
             Sprite = GetNextFrame(delta);
             if (FlipX)
             {
@@ -162,6 +200,10 @@ namespace mizjam1.Actors
                 {
                     Position += Speed * delta;
                 }
+                else
+                {
+                    OnCollision();
+                }
             }
             else
             {
@@ -170,23 +212,40 @@ namespace mizjam1.Actors
             CheckBounds();
         }
 
+        internal virtual void OnCollision(bool bounds = false)
+        {
+            if (DestroyOnCollision)
+            {
+                Scene.GetCurrentChunk().RemoveActor(this);
+            }
+
+        }
         internal void CheckBounds()
         {
+            bool bounds = false;
             if (Position.X < 0)
             {
                 Position.X = 0;
+                bounds = true;
             }
             if (Position.Y < 0)
             {
                 Position.Y = 0;
+                bounds = true;
             }
             if (Position.X > Scene.TileSize * (Scene.GridSize - 1))
             {
                 Position.X = Scene.TileSize * (Scene.GridSize - 1);
+                bounds = true;
             }
             if (Position.Y > Scene.TileSize * (Scene.GridSize - 1))
             {
                 Position.Y = Scene.TileSize * (Scene.GridSize - 1);
+                bounds = true;
+            }
+            if (Collidable && bounds)
+            {
+                OnCollision(true);
             }
         }
 
@@ -194,7 +253,7 @@ namespace mizjam1.Actors
         {
             var collided = false;
 
-            foreach (var actor in Scene.Actors.Where(a => a.Collidable && ((a.CollisionGroup & CollidesWith) > 0) && a != this))
+            foreach (var actor in Scene.GetActors().Where(a => a.Collidable && ((a.CollisionGroup & CollidesWith) > 0) && a != this))
             {
                 var diff = actor.Position - position;
                 var dist2 = diff.LengthSquared();
@@ -209,12 +268,13 @@ namespace mizjam1.Actors
                 Position = position - diff * distanceToMove;
                 Speed.X *= -0.5f;
                 Speed.Y *= -0.5f;
+                CollidedWith = actor;
                 collided = true;
             }
             return collided;
         }
 
-        internal void Draw(SpriteBatch spriteBatch)
+        internal virtual void Draw(SpriteBatch spriteBatch)
         {
             if (Sprite == null)
             {
@@ -226,7 +286,8 @@ namespace mizjam1.Actors
                     new Vector2(
                         (int)Position.X - Sprite.Origin.X,
                         (int)Position.Y - Sprite.Origin.Y
-                    )
+                    ),
+                    Rotation
                  );
         }
 

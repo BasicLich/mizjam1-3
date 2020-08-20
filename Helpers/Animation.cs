@@ -116,6 +116,47 @@ namespace mizjam1.Helpers
                 }
             };
         }
+        internal static Dictionary<string, Animation> GetFarmerAnimation(Texture2D texture)
+        {
+            var origin = new Vector2(0, 0);
+            var depth = 0.8f;
+            return new Dictionary<string, Animation>()
+            {
+                {
+                    "FARMER_WALK", new Animation(new List<Sprite>() {
+                        new Sprite(new TextureRegion2D(texture, 16 * 0, 16 * 1, 16, 16)) { OriginNormalized = origin, Depth = depth },
+                        new Sprite(new TextureRegion2D(texture, 16 * 1, 16 * 1, 16, 16)) { OriginNormalized = origin, Depth = depth },
+                    },
+                    4 / 60f)
+                },
+                {
+                    "FARMER_IDLE", new Animation(new List<Sprite>()
+                    {
+                        new Sprite(new TextureRegion2D(texture, 16 * 0, 16 * 1, 16, 16)) { OriginNormalized = origin, Depth = depth },
+                    },
+                    1f / 60f,
+                    false
+                    )
+                },
+
+                {
+                    "CHICKEN_WALK", new Animation(new List<Sprite>() {
+                        new Sprite(new TextureRegion2D(texture, 16 * 8, 16 * 0, 16, 16)) { OriginNormalized = origin, Depth = depth },
+                        new Sprite(new TextureRegion2D(texture, 16 * 9, 16 * 0, 16, 16)) { OriginNormalized = origin, Depth = depth },
+                    },
+                    4 / 60f)
+                },
+                {
+                    "CHICKEN_IDLE", new Animation(new List<Sprite>()
+                    {
+                        new Sprite(new TextureRegion2D(texture, 16 * 8, 16 * 0, 16, 16)) { OriginNormalized = origin, Depth = depth },
+                    },
+                    1f / 60f,
+                    false
+                    )
+                },
+            };
+        }
         internal static Dictionary<string, Animation> GetSplashAnimation(Texture2D texture)
         {
             var origin = new Vector2(0, 0);

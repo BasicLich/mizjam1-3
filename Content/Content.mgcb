@@ -26,6 +26,12 @@
 /processorParam:TextureFormat=Color
 /build:borders.png
 
+#begin chicken.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:chicken.wav
+
 #begin cut.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -55,6 +61,12 @@
 /processorParam:TextureFormat=Color
 /build:font_0.png
 
+#begin laser.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:laser.wav
+
 #begin numbers.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -72,6 +84,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:pick.wav
+
+#begin pig.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:pig.wav
 
 #begin tileset.png
 /importer:TextureImporter

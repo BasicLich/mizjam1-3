@@ -17,8 +17,12 @@ namespace mizjam1.Helpers
         internal Point[] OpeningLocations;
         internal HashSet<Point> SafePoints;
 
-        internal Dungeon(int size)
+        internal Dungeon(int size, bool up, bool left, bool right, bool down)
         {
+            OpenTop = up;
+            OpenBottom = down;
+            OpenLeft = left;
+            OpenRight = right;
             Size = size;
             do
             {
@@ -36,11 +40,7 @@ namespace mizjam1.Helpers
         }
 
         private void MakeOpenings()
-        {
-            OpenTop = RandomHelper.NextBool();
-            OpenRight = RandomHelper.NextBool();
-            OpenBottom = RandomHelper.NextBool();
-            OpenLeft = RandomHelper.NextBool();
+        {            
             Openings = new bool[4];
             Openings[0] = OpenTop;
             Openings[1] = OpenRight;
