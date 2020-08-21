@@ -22,7 +22,7 @@ namespace mizjam1.Actors
         internal float ChickenFlickerTime = 1;
 
         internal float ChickenTimer = 0;
-        internal float ChickenTime = 5;
+        internal float ChickenTime = 10;
 
         internal float DamageTimer = 0;
         internal float DamageTime = 1;
@@ -32,7 +32,7 @@ namespace mizjam1.Actors
         {
             Player = player;
             Controllable = true;
-            MaxSpeed = MaxSpeed * 1 / 3;
+            MaxSpeed = MaxSpeed * 0.5f;
             //IsChicken = true;
         }
 
@@ -69,7 +69,9 @@ namespace mizjam1.Actors
                 return;
             }
             SoundPlayer.Instance.Play("PIG");
+            Scene.CreatePickUpParticle(Scene.Player.Position);
             Scene.Player.Health--;
+            Scene.Player.TakenDamage = true;
             CanDamage = false;
         }
 
@@ -120,10 +122,6 @@ namespace mizjam1.Actors
 
             GetNextSprite(delta);
         }
-        internal void FollowControl(float delta)
-        {
-
-        }
         internal void RandomControl(float delta)
         {
             ChangeMovementTimer += delta;
@@ -159,34 +157,14 @@ namespace mizjam1.Actors
         }
         internal override void AIControl(float delta)
         {
-            if (!Chunk.HasPlayer())
+            if (!Chunk.HasPlayer() || (Scene.Player.NTeleports == 1 && !Scene.Player.Attacked))
             {
                 RandomControl(delta);
             }
             else
             {
                 var defaultPress = IsChicken;
-                Up = defaultPress;
-                Down = defaultPress;
-                Left = defaultPress;
-                Right = defaultPress;
-                var margin = Size / 2;
-                if (Scene.Player.Position.X > Position.X + margin)
-                {
-                    Right = !defaultPress;
-                }
-                else if (Scene.Player.Position.X < Position.X - margin)
-                {
-                    Left = !defaultPress;
-                }
-                if (Scene.Player.Position.Y > Position.Y + margin)
-                {
-                    Down = !defaultPress;
-                }
-                else if (Scene.Player.Position.Y < Position.Y - margin)
-                {
-                    Up = !defaultPress;
-                }
+                GoTowards(Scene.Player.Position, defaultPress);
             }
         }
     }

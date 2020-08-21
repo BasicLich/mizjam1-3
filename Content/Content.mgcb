@@ -10,6 +10,7 @@
 
 #-------------------------------- References --------------------------------#
 
+/reference:..\bin\Debug\netcoreapp3.1\MonoGame.Extended.Content.Pipeline.dll
 
 #---------------------------------- Content ---------------------------------#
 
@@ -43,6 +44,11 @@
 /processorParam:Quality=Best
 /build:dirt.wav
 
+#begin font.fnt
+/importer:BitmapFontImporter
+/processor:BitmapFontProcessor
+/build:font.fnt
+
 #begin font_0.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -54,6 +60,12 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:font_0.png
+
+#begin gameover.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:gameover.wav
 
 #begin laser.wav
 /importer:WavImporter
@@ -85,6 +97,12 @@
 /processorParam:Quality=Best
 /build:pig.wav
 
+#begin theme.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:theme.wav
+
 #begin tileset.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -108,4 +126,10 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:water_pick.wav
+
+#begin win.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:win.wav
 

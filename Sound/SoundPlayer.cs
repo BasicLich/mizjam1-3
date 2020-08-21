@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,8 +17,17 @@ namespace mizjam1.Sound
         internal Dictionary<string, SoundEffectInstance> Current;
         internal Dictionary<string, int> CurrentNote;
         internal List<float> Scale;
-        public void Init(SoundEffect dirt, SoundEffect waterPick, SoundEffect waterDrop, SoundEffect pick, SoundEffect cut, SoundEffect chicken, SoundEffect pig, SoundEffect laser)
+        internal SoundEffect Theme, GameOver, Win;
+        internal string CurrentSong = "";
+        internal SoundEffectInstance Song;
+        internal bool IsMuted;
+        public void Init(SoundEffect theme, SoundEffect gameOver, SoundEffect win, SoundEffect dirt, SoundEffect waterPick, SoundEffect waterDrop, SoundEffect pick, SoundEffect cut, SoundEffect chicken, SoundEffect pig, SoundEffect laser)
         {
+            Theme = theme;
+            GameOver = gameOver;
+            Win = win;
+            SetTheme();
+
             Sounds = new Dictionary<string, SoundEffect>
             {
                 ["DIRT"] = dirt,
@@ -75,13 +85,101 @@ namespace mizjam1.Sound
                 2
             };            
         }
+
+
         public void Play(string name)
         {
             Queues[name].Enqueue(Sounds[name].CreateInstance());
         }
+        
+        public void Toggle()
+        {
+            if (IsMuted)
+            {
+                Unmute();
+            } else
+            {
+                Mute();
+            }
+        }
 
+        public void Mute()
+        {
+            Song.Stop();
+            IsMuted = true;
+        }
+
+        public void Unmute()
+        {
+            Song.Play();
+            IsMuted = false;
+        }
+        public void SetGameOver()
+        {
+
+            if (CurrentSong.Equals("GAMEOVER")) {
+                return;
+            }
+            if (Song != null)
+            {
+                Song.Stop();
+            }
+            CurrentSong = "GAMEOVER";
+            Song = GameOver.CreateInstance();
+            Song.IsLooped = false;
+            if (!IsMuted)
+            {
+                Song.Play();
+            }
+        }
+
+        public void SetTheme()
+        {
+            if (CurrentSong.Equals("THEME")) {
+                return;
+            }
+            if (Song != null)
+            {
+                Song.Stop();
+            }
+
+            CurrentSong = "THEME";
+            Song = Theme.CreateInstance();
+            Song.IsLooped = true;
+            if (!IsMuted)
+            {
+                Song.Play();
+            }
+        }
+        public void SetWin()
+        {
+            if (CurrentSong.Equals("WIN"))
+            {
+                return;
+            }
+            if (Song != null)
+            {
+                Song.Stop();
+            }
+
+            CurrentSong = "WIN";
+            Song = Win.CreateInstance();
+            Song.IsLooped = false;
+            if (!IsMuted)
+            {
+                Song.Play();
+            }
+        }
+        public bool IsSongEnded()
+        {
+            return Song.State == SoundState.Stopped;
+        }
         public void Play()
         {
+            if (IsMuted)
+            {
+                return;
+            }
             foreach (var k in Queues.Keys)
             {
 

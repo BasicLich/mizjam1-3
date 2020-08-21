@@ -22,12 +22,14 @@ namespace mizjam1.Actors
         internal Vector2 Acceleration;
         internal float InverseFriction = 45f;
         internal float MaxSpeed = 50;
-        internal float WalkAcceleration = 100;
+        internal float WalkAcceleration = 2000;
 
         internal Sprite Sprite;
         internal float Rotation = 0;
 
         internal float Size = 16;
+
+        internal float Scale = 1;
 
         internal Dictionary<string, Animation> Animations;
         internal float Elapsed;
@@ -40,6 +42,7 @@ namespace mizjam1.Actors
         internal bool Controllable = false;
         internal bool Interactive = false;
         internal bool Collidable = false;
+        internal bool BorderCollide = true;
         internal bool DestroyOnCollision = false;
 
         internal int CollisionGroup = 1;
@@ -57,6 +60,10 @@ namespace mizjam1.Actors
 
         internal void Remove()
         {
+            if (Scene == null)
+            {
+                return;
+            }
             Scene.RemoveActor(this);
         }
 
@@ -219,7 +226,10 @@ namespace mizjam1.Actors
             {
                 Position += Speed * delta;
             }
-            CheckBounds();
+            if (BorderCollide)
+            {
+                CheckBounds();
+            }
         }
 
         internal virtual void OnCollision(bool bounds = false)
@@ -262,7 +272,11 @@ namespace mizjam1.Actors
         internal bool Collide(Vector2 position)
         {
             var collided = false;
-
+            if (Scene == null)
+            {
+                return false;
+            }
+            
             foreach (var actor in Scene.GetActors().Where(a => a.Collidable && ((a.CollisionGroup & CollidesWith) > 0) && a != this))
             {
                 var diff = actor.Position - position;
@@ -275,12 +289,17 @@ namespace mizjam1.Actors
                 var dist = MathF.Sqrt(dist2);
                 var distanceToMove = radiiSum - dist;
                 diff.Normalize();
-                Position = position - diff * distanceToMove;
-                Speed.X *= -0.5f;
-                Speed.Y *= -0.5f;
+                position -= diff * distanceToMove;
+                //Speed.X *= -1f;
+                //Speed.Y *= -1f;
                 CollidedWith = actor;
                 collided = true;
             }
+            if (collided)
+            {
+                Position = position;
+            }
+
             return collided;
         }
 
@@ -297,8 +316,11 @@ namespace mizjam1.Actors
                         (int)Position.X - Sprite.Origin.X,
                         (int)Position.Y - Sprite.Origin.Y
                     ),
-                    Rotation
+                    Rotation,
+                    Vector2.One * Scale
                  );
+
+            //spriteBatch.DrawCircle(Position + new Vector2(Size * Scale / 2f, Size * Scale / 2f), Size * Scale / 2f, 16, Color.Red, 1, 1);
         }
 
         internal void SetAnimation(string animation)
@@ -315,6 +337,34 @@ namespace mizjam1.Actors
         {
             Elapsed += elapsed;
             return Animations[AnimationState].GetFrame(Elapsed);
+        }
+
+        internal void GoTowards(Vector2 pos, bool defaultPress = false, float? margin = null)
+        {
+            Up = defaultPress;
+            Down = defaultPress;
+            Left = defaultPress;
+            Right = defaultPress;
+            if (!margin.HasValue)
+            {
+                margin = Size / 2;
+            }
+            if (pos.X > Position.X + margin)
+            {
+                Right = !defaultPress;
+            }
+            else if (pos.X < Position.X - margin)
+            {
+                Left = !defaultPress;
+            }
+            if (pos.Y > Position.Y + margin)
+            {
+                Down = !defaultPress;
+            }
+            else if (pos.Y < Position.Y - margin)
+            {
+                Up = !defaultPress;
+            }
         }
     }
 }

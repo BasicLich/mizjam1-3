@@ -13,17 +13,21 @@ namespace mizjam1.Actors
         internal int Growth;
         internal int MaxGrowth = 2;
         internal float GrowthTimer;
-        internal float GrowthTime = 30;
-
+        internal float GrowthTime = 15;
+        internal bool IsFirst = true;
         internal override void Update(GameTime gameTime)
         {
             if (Seeded && Growth < MaxGrowth)
             {
                 GrowthTimer += gameTime.GetElapsedSeconds();
-                if (GrowthTimer > GrowthTime)
+                if ((IsFirst && GrowthTimer > 1) || GrowthTimer > GrowthTime)
                 {
                     GrowthTimer = 0;
                     Growth++;
+                    if (Growth == MaxGrowth)
+                    {
+                        IsFirst = false;
+                    }
                 }
             }
             base.Update(gameTime);

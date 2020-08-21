@@ -3,7 +3,9 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 using mizjam1.Actors;
+using mizjam1.ContentLoaders;
 using mizjam1.Helpers;
 using mizjam1.Sound;
 using mizjam1.UI;
@@ -20,16 +22,11 @@ namespace mizjam1.Scenes
 {
     internal class MapScene : Scene
     {
-        internal GameWindow Window;
-        internal GraphicsDevice GraphicsDevice;
-        internal ContentManager Content;
-        internal SpriteBatch SpriteBatch;
-        internal OrthographicCamera Camera;
-        internal int ChunkSize = 5;
-        internal int GridSize = 32;
+        internal int ChunkSize = 3;
+        internal int GridSize = 16;
         internal int TileSize = 16;
+        internal int Farmers = 3;
         internal TextureRegion2D[,] Floor;
-        internal Texture2D Tileset;
 
 
         internal Chunk[,] Chunks;
@@ -37,69 +34,46 @@ namespace mizjam1.Scenes
         internal Vector2 LastCameraPos;
 
         internal Player Player;
-        internal BitmapFont Font;
         internal HUD HUD;
         internal bool IsGameOver;
-        public override void Initialize(GameWindow window, GraphicsDevice graphicsDevice, ContentManager content)
+        internal MapScene(int gridSize, int chunkSize, int farmers = 3)
         {
-            Window = window;
-            GraphicsDevice = graphicsDevice;
-            SpriteBatch = new SpriteBatch(GraphicsDevice);
-
-            ViewportAdapter = new DefaultViewportAdapter(GraphicsDevice);
-            Camera = new OrthographicCamera(ViewportAdapter)
-            {
-                Zoom = 2
-            };
-            Window.ClientSizeChanged += (s, e) => ViewportAdapter.Reset();
-
-            Content = content;
-            Tileset = Content.Load<Texture2D>("tileset");
-
-            var dirt = Content.Load<SoundEffect>("dirt");
-            SoundPlayer.Instance.Init(
-                Content.Load<SoundEffect>("dirt"),
-                Content.Load<SoundEffect>("water_pick"),
-                Content.Load<SoundEffect>("water_drop"),
-                Content.Load<SoundEffect>("pick"),
-                Content.Load<SoundEffect>("cut"),
-                Content.Load<SoundEffect>("chicken"),
-                Content.Load<SoundEffect>("pig"),
-                Content.Load<SoundEffect>("laser")
-
-                );
-
-
-
-            var numbersTexture = Content.Load<Texture2D>("numbers");
+            ChunkSize = chunkSize;
+            GridSize = gridSize;
+            Farmers = farmers;
+        }
+        public override void Initialize(GameWindow window, GraphicsDevice graphicsDevice, ContentManager content, Main main)
+        {
+            base.Initialize(window, graphicsDevice, content, main);
 
             var numbers = new List<TextureRegion2D>();
             for (int i = 0; i < 10; i++)
             {
-                numbers.Add(new TextureRegion2D(numbersTexture, TileSize * i, 0, TileSize, TileSize));
+                numbers.Add(new TextureRegion2D(ContentLoader.Instance.Numbers, TileSize * i, 0, TileSize, TileSize));
             }
-            var bordersTexture = Content.Load<Texture2D>("borders");
-            var borders = new TextureRegion2D[3, 3];
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 0; j < 3; j++)
-                {
-                    borders[i, j] = new TextureRegion2D(bordersTexture, TileSize * i, TileSize * j, TileSize, TileSize);
-                }
-            }
+                        
             Chunks = new Chunk[ChunkSize, ChunkSize];
             var chunkList = new List<Chunk>();
 
-            CurrentChunk = new Point((int) (RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize));
-            var wellChunk = new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize));
+            CurrentChunk = new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize));
             var shipParts = new List<Point>
             {
                 CurrentChunk,
-                new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
-                new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
-                new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize)),
             };
-
+            for (int i = 0; i < 3; i++)
+            {
+                bool added = false;
+                while (!added)
+                {
+                    var p = new Point((int)(RandomHelper.NextFloat() * ChunkSize), (int)(RandomHelper.NextFloat() * ChunkSize));
+                    if (shipParts.Contains(p))
+                    {
+                        continue;
+                    }
+                    shipParts.Add(p);
+                    added = true;
+                }
+            }
             for (int i = 0; i < ChunkSize; i++)
             {
                 for (int j = 0; j < ChunkSize; j++)
@@ -117,7 +91,7 @@ namespace mizjam1.Scenes
                     {
                         shipPart = shipParts.IndexOf(p);
                     }
-                    Chunks[i, j] = new Chunk(this, new Point(i, j), spawnPlayer, hasShipPart, shipPart, up, left, right, down, GridSize, TileSize);
+                    Chunks[i, j] = new Chunk(this, new Point(i, j), spawnPlayer, hasShipPart, shipPart, up, left, right, down, GridSize, TileSize, Farmers);
                     chunkList.Add(Chunks[i, j]);
                 }
             }
@@ -175,26 +149,36 @@ namespace mizjam1.Scenes
 
             Player = GetCurrentChunk().Player;
 
-            Font = Content.Load<BitmapFont>("font");
 
             HUD = new HUD(Player, Camera, window)
             {
                 Numbers = numbers,
-                Carrot = new TextureRegion2D(Tileset, TileSize * 7, 0, TileSize, TileSize),
-                WaterEmpty = new TextureRegion2D(Tileset, TileSize * 5, 0, TileSize, TileSize),
-                WaterFull = new TextureRegion2D(Tileset, TileSize * 6, 0, TileSize, TileSize),
-                HeartFull = new TextureRegion2D(Tileset, TileSize * 4, 0, TileSize, TileSize),
-                HeartHalf = new TextureRegion2D(Tileset, TileSize * 3, 0, TileSize, TileSize),
-                HeartEmpty = new TextureRegion2D(Tileset, TileSize * 2, 0, TileSize, TileSize),
-                Borders = borders,
-                Font = Font
+                Carrot = new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 7, 0, TileSize, TileSize),
+                WaterEmpty = new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 5, 0, TileSize, TileSize),
+                WaterFull = new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 6, 0, TileSize, TileSize),
+                HeartFull = new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 4, 0, TileSize, TileSize),
+                HeartHalf = new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 3, 0, TileSize, TileSize),
+                HeartEmpty = new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 2, 0, TileSize, TileSize),
+                Font = ContentLoader.Instance.Font
             };
 
         }
 
-        internal void GameOver()    
+        internal void GameOver()
         {
             IsGameOver = true;
+            SoundPlayer.Instance.Play();
+
+            SoundPlayer.Instance.SetGameOver();
+            while (!SoundPlayer.Instance.IsSongEnded()) ;
+            SoundPlayer.Instance.SetTheme();
+            Game.NewMenu();
+        }
+
+        internal void Win()
+        {
+            SoundPlayer.Instance.SetTheme();
+            Game.NewMenu();
         }
 
         #region CREATORS
@@ -243,30 +227,30 @@ namespace mizjam1.Scenes
         }
 
         public override void Update(GameTime gameTime)
-        {
-            Input.Update(Keyboard.GetState());
+        {            
+            
+
             if (!IsGameOver)
             {
                 GetCurrentChunk().Update(gameTime);
                 //TODO Update Crops and Farmers in all chunks
             }
 
-            SoundPlayer.Instance.Play();
         }
         public override void Draw(GameTime gameTime)
         {
-            
+
 
             GraphicsDevice.Clear(Color.Black);
 
             GetCurrentChunk().Draw(SpriteBatch);
 
             SpriteBatch.Begin(samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.FrontToBack);
-                HUD.Draw(SpriteBatch);
-                if (IsGameOver)
-                {
-                    //TODO Add game over screen
-                }
+            HUD.Draw(SpriteBatch);
+            if (IsGameOver)
+            {
+                //TODO Add game over screen
+            }
             SpriteBatch.End();
         }
 

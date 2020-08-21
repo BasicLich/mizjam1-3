@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using mizjam1.ContentLoaders;
 using mizjam1.Helpers;
 using mizjam1.Scenes;
 using mizjam1.Sound;
@@ -20,21 +21,76 @@ namespace mizjam1.Actors
         internal bool Teleporting;
         internal bool CanTeleport = true;
         internal float TeleportCooldownTimer = 0;
-        internal float TeleportCooldownTime = 2;
+        internal float TeleportCooldownTime = 1;
         internal bool[] ShipParts = new bool[4];
         internal bool[] ShipPartsAdded = new bool[4];
 
         internal int MaxHealth = 4;
         internal int Health = 4;
 
+        internal bool CropDigged, CropWatered, CropHarvested, CropPlanted, BushCollected, CarrotCollected, WaterPicked;
+        internal bool Teleported;
+        internal bool Died, TakenDamage, Attacked, Healed;
+        internal bool PartCollected, PartPlanted, AllPartsCollected, AllPartsPlanted;
+        internal int NTeleports = 0;
+
+        internal Player(Vector2 position)
+        {
+
+            Position = position;
+            Animations = Animation.GetPigAnimation(ContentLoader.Instance.Tileset);
+            Moveable = true;
+            Controllable = true;
+            PlayerControllable = true;
+            Animated = true;
+            Collidable = true;
+            CanShoot = true;
+            CollisionGroup = 0b01;
+            CollidesWith = 0b01;
+        }
         internal override void Update(GameTime gameTime)
         {
             if (Health < 0)
             {
+                Died = true;
                 Scene.GameOver();
+                return;
             }
+            if (AllPlanted())
+            {
+                PlayerControllable = false;
+                var ship = (Ship)Scene.GetCurrentChunk().Actors.FirstOrDefault(a => a is Ship);
+                ship.Collidable = false;
+                Collidable = false;
+                WalkAcceleration = 10;
+                if ((ship.Position - Position).LengthSquared() > Size)
+                {
+                    GoTowards(ship.Position, false, 0);
+                    SoundPlayer.Instance.SetWin();
+                    if (SoundPlayer.Instance.IsSongEnded())
+                    {
+                        Scene.Win();
+                    }
+                }
+                else
+                {
 
+                    Moveable = false;
+                    Animated = false;
+                    Sprite = null;
+                    ship.Moveable = true;
+                    ship.BorderCollide = false;
+                    ship.MaxSpeed = 40;
+                    ship.Acceleration.Y = -100;
+                    ship.Fired = true;
+
+                }
+            }
             base.Update(gameTime);
+            if (AllPlanted())
+            {
+                return;
+            }
             if (Teleporting)
             {
                 CanTeleport = false;
@@ -43,6 +99,7 @@ namespace mizjam1.Actors
                 {
                     Teleporting = false;
                     CanTeleport = true;
+                    NTeleports++;
                     TeleportCooldownTimer = 0;
                 }
                 return;
@@ -53,22 +110,27 @@ namespace mizjam1.Actors
                 {
                     t.Teleport();
                     CanTeleport = false;
+                    Teleported = true;
                 }
             }
-
-            foreach (Carrot c in Scene.GetActors().Where(c => c is Carrot carrot && carrot.CanBeCollected() && (c.Position - Position).LengthSquared() < Size * Size))
+            if (Scene != null)
             {
-                Scene.CreatePickUpParticle(c.Position);
-                SoundPlayer.Instance.Play("PICK");
-                Carrots++;
-                Scene.RemoveActor(c);
-            }
-            foreach (ShipPart c in Scene.GetActors().Where(c => c is ShipPart carrot && (c.Position - Position).LengthSquared() < Size * Size))
-            {
-                Scene.CreatePickUpParticle(c.Position);
-                SoundPlayer.Instance.Play("PICK");
-                ShipParts[c.Part] = true;
-                Scene.RemoveActor(c);
+                foreach (Carrot c in Scene.GetActors().Where(c => c is Carrot carrot && carrot.CanBeCollected() && (c.Position - Position).LengthSquared() < Size * Size))
+                {
+                    Scene.CreatePickUpParticle(c.Position);
+                    SoundPlayer.Instance.Play("PICK");
+                    Carrots++;
+                    CarrotCollected = true;
+                    Scene.RemoveActor(c);
+                }
+                foreach (ShipPart c in Scene.GetActors().Where(c => c is ShipPart carrot && (c.Position - Position).LengthSquared() < Size * Size))
+                {
+                    PartCollected = true;
+                    Scene.CreatePickUpParticle(c.Position);
+                    SoundPlayer.Instance.Play("PICK");
+                    ShipParts[c.Part] = true;
+                    Scene.RemoveActor(c);
+                }
             }
             Interaction();
             ShipAction();
@@ -80,6 +142,8 @@ namespace mizjam1.Actors
                 Carrots -= 4;
                 Health++;
                 Healing = false;
+                Healed = true;
+                
                 Scene.CreateSeedParticle(Position);
                 //TODO: Add sound
             }
@@ -151,7 +215,9 @@ namespace mizjam1.Actors
                 {
                     ShipPartsAdded[i] = true;
                 }
-            } else if (!ShipPartsAdded[0])
+                SoundPlayer.Instance.Play("WATERDROP");
+            }
+            else if (!ShipPartsAdded[0])
             {
                 var pos = new Vector2((int)(Position.X / Size), (int)(Position.Y / Size)) * Size;
                 Vector2 closest = Position;
@@ -179,7 +245,8 @@ namespace mizjam1.Actors
                 }
                 Scene.GetCurrentChunk().CreateShip(closest);
                 ShipPartsAdded[0] = true;
-
+                SoundPlayer.Instance.Play("WATERDROP");
+                PartPlanted = true;
             }
         }
         private bool DoWellActions(Well well)
@@ -189,6 +256,7 @@ namespace mizjam1.Actors
                 return false;
             }
             HasWater = true;
+            WaterPicked = true;
             Scene.CreateSplashParticle(well.Position);
 
             SoundPlayer.Instance.Play("WATERPICK");
@@ -202,6 +270,7 @@ namespace mizjam1.Actors
                 var position = new Vector2((float)(Size * Math.Round(intPos.X)), (float)(Size * Math.Round(intPos.Y)));
                 Scene.CreateCrop(position);
                 SoundPlayer.Instance.Play("DIRT");
+                CropDigged = true;
                 return true;
             }
             if (Carrots > 0 && crop.Watered && !crop.Seeded)
@@ -210,13 +279,14 @@ namespace mizjam1.Actors
 
                 Scene.CreateSeedParticle(crop.Position);
                 SoundPlayer.Instance.Play("DIRT");
+                CropPlanted = true;
                 Carrots--;
                 return true;
             }
             if (HasWater && !crop.Watered && !crop.Seeded)
             {
                 crop.Watered = true;
-
+                CropWatered = true;
                 Scene.CreateSplashParticle(crop.Position);
 
                 SoundPlayer.Instance.Play("WATERDROP");
@@ -226,6 +296,7 @@ namespace mizjam1.Actors
             if (crop.CanBeHarvested())
             {
                 Scene.CreateSeedParticle(crop.Position);
+                CropHarvested = true;
                 crop.Watered = false;
                 crop.Seeded = false;
                 crop.Growth = 0;
@@ -248,6 +319,7 @@ namespace mizjam1.Actors
                 return false;
             }
             //Seeds++;
+            BushCollected = true;
             Scene.RemoveActor(bush);
             Scene.CreateCarrot(bush.Position);
 
@@ -258,19 +330,28 @@ namespace mizjam1.Actors
         {
             if (Speed.LengthSquared() > Size && Carrots > 0)
             {
+                Attacked = true;
                 Scene.GetCurrentChunk().CreateBullet();
                 SoundPlayer.Instance.Play("LASER");
                 Carrots--;
             }
         }
+        internal bool AllPlanted()
+        {
+            return ShipPartsAdded.All(p => p);
+        }
         internal override void Control()
         {
             base.Control();
+            if (AllPlanted())
+            {
+                return;
+            }
             DoInteraction = Input.IsKeyJustPressed(Keys.K);
             DoShipAction = Input.IsKeyJustPressed(Keys.L);
             Shooting = Input.IsKeyJustPressed(Keys.J);
             Healing = Input.IsKeyJustPressed(Keys.H);
         }
-        
+
     }
 }

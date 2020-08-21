@@ -1,7 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using mizjam1.ContentLoaders;
+using mizjam1.Helpers;
 using mizjam1.Scenes;
+using mizjam1.Sound;
 
 namespace mizjam1
 {
@@ -25,12 +29,12 @@ namespace mizjam1
 
         protected override void Initialize()
         {
-            _graphics.PreferredBackBufferWidth = 544;
-            _graphics.PreferredBackBufferHeight = 544 + 64;
-            _graphics.ApplyChanges();
-            Scene = new MapScene();
+            ContentLoader.Instance.Init(Content);
 
-            Scene.Initialize(Window, GraphicsDevice, Content);
+            _graphics.PreferredBackBufferWidth = 16 * 16 * 2;
+            _graphics.PreferredBackBufferHeight = 16 * 16 * 2 + 64;
+            _graphics.ApplyChanges();
+            NewMenu();
             base.Initialize();
 
             Scene.ViewportAdapter.Reset();
@@ -40,23 +44,51 @@ namespace mizjam1
         {
         }
 
+        internal void NewEasyGame()
+        {
+            Scene = new MapScene(16, 3, 1);
+            Scene.Initialize(Window, GraphicsDevice, Content, this);
+        }
+        internal void NewNormalGame()
+        {
+            Scene = new MapScene(24, 4, 3);
+            Scene.Initialize(Window, GraphicsDevice, Content, this);
+        }
+
+        internal void NewHardGame()
+        {
+            Scene = new MapScene(32, 5, 5);
+            Scene.Initialize(Window, GraphicsDevice, Content, this);
+        }
+        internal void NewMenu()
+        {
+            Scene = new MenuScene();
+            Scene.Initialize(Window, GraphicsDevice, Content, this);
+        }
         protected override void Update(GameTime gameTime)
         {
+            if (Input.IsKeyJustPressed(Keys.M))
+            {
+                SoundPlayer.Instance.Toggle();
+            }
+            Input.Update(Keyboard.GetState());
+
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             {
                 Exit();
             }
-            if (Keyboard.GetState().IsKeyDown(Keys.R))
+            if (Input.IsKeyJustPressed(Keys.R))
             {
-                Scene = new MapScene();
-                Scene.Initialize(Window, GraphicsDevice, Content);
+                NewMenu();
             }
-            if (Keyboard.GetState().IsKeyDown(Keys.F12))
+            if (Input.IsKeyJustPressed(Keys.F12))
             {
                 _graphics.ToggleFullScreen();
             }
             Scene.Update(gameTime);
             base.Update(gameTime);
+
+            SoundPlayer.Instance.Play();
         }
 
         protected override void Draw(GameTime gameTime)

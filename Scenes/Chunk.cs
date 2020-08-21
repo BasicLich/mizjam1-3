@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using mizjam1.Actors;
+using mizjam1.ContentLoaders;
 using mizjam1.Helpers;
 using MonoGame.Extended;
 using MonoGame.Extended.Sprites;
@@ -28,9 +29,9 @@ namespace mizjam1.Scenes
         internal MapScene Scene;
         internal Point Position;
         internal bool Up, Down, Left, Right;
-        internal int NBushes = 5;
+        internal int NBushes = 10;
 
-        internal Chunk(MapScene scene, Point position, bool createPlayer, bool hasShipPart, int shipPart, bool up, bool left, bool right, bool down, int gridSize, int tileSize)
+        internal Chunk(MapScene scene, Point position, bool createPlayer, bool hasShipPart, int shipPart, bool up, bool left, bool right, bool down, int gridSize, int tileSize, int farmers)
         {
             Scene = scene;
             Position = position;
@@ -61,9 +62,10 @@ namespace mizjam1.Scenes
             {
                 CreateShipPart(FindEmptyPosition(), shipPart, true);
             }
+            NBushes += (int)(RandomHelper.NextFloat() * 5);
             if (!createPlayer)
             {
-                for (int i = 0; i < 2 + RandomHelper.NextFloat() * 4; i++)
+                for (int i = 0; i < farmers + (int) (RandomHelper.NextFloat() * (farmers + 1)); i++)
                 {
                     CreateFarmer(true);
                 }
@@ -106,13 +108,13 @@ namespace mizjam1.Scenes
             {
                 for (int j = 0; j < GridSize; j++)
                 {
-                    Floor[i, j] = new TextureRegion2D(Scene.Tileset, TileSize * 0, TileSize * 4, TileSize, TileSize);
+                    Floor[i, j] = new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 0, TileSize * 4, TileSize, TileSize);
                 }
             }
             foreach (var p in Dungeon.SafePoints)
             {
                 var x = Math.Max(0, (int)(RandomHelper.NextFloat() * 20) - 15);
-                Floor[p.X, p.Y] = new TextureRegion2D(Scene.Tileset, TileSize * x, TileSize * 4, TileSize, TileSize);
+                Floor[p.X, p.Y] = new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * x, TileSize * 4, TileSize, TileSize);
             }
         }
         internal void CreateTrees(bool instantly = false)
@@ -129,9 +131,9 @@ namespace mizjam1.Scenes
                     var Tree = new Actor
                     {
                         Position = new Vector2(TileSize * i, TileSize * j),
-                        Sprite = new Sprite(new TextureRegion2D(Scene.Tileset, TileSize * x, TileSize * 3, TileSize, TileSize)) { Depth = 0.7f, OriginNormalized = Vector2.Zero },
+                        Sprite = new Sprite(new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * x, TileSize * 3, TileSize, TileSize)) { Depth = 0.7f, OriginNormalized = Vector2.Zero },
                         Collidable = true,
-                        Size = TileSize - 6,
+                        Size = TileSize - 2,
                         CollisionGroup = 0b11,
                         CollidesWith = 0b00,
                     };
@@ -144,7 +146,7 @@ namespace mizjam1.Scenes
             var well = new Well()
             {
                 Position = FindEmptyPosition(true),
-                Sprite = new Sprite(new TextureRegion2D(Scene.Tileset, TileSize * 0, TileSize * 5, TileSize, TileSize))
+                Sprite = new Sprite(new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 0, TileSize * 5, TileSize, TileSize))
                 {
                     OriginNormalized = Vector2.Zero,
                     Depth = 0.6f,
@@ -163,7 +165,7 @@ namespace mizjam1.Scenes
                 var bush = new Bush
                 {
                     Position = pos,
-                    Sprite = new Sprite(new TextureRegion2D(Scene.Tileset, TileSize * (int)(RandomHelper.NextFloat() * 3), TileSize * 3, TileSize, TileSize))
+                    Sprite = new Sprite(new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * (int)(RandomHelper.NextFloat() * 3), TileSize * 3, TileSize, TileSize))
                     {
                         OriginNormalized = Vector2.Zero,
                         Depth = 0.6f,
@@ -175,7 +177,7 @@ namespace mizjam1.Scenes
         }
         internal void CreateShipPart(Vector2 position, int shipPart, bool instantly = false)
         {
-            var sprite = new Sprite(new TextureRegion2D(Scene.Tileset, TileSize * 7, TileSize * (7 - shipPart), TileSize, TileSize))
+            var sprite = new Sprite(new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 7, TileSize * (7 - shipPart), TileSize, TileSize))
             {
                 OriginNormalized = Vector2.Zero,
                 Depth = 0.6f,
@@ -188,7 +190,7 @@ namespace mizjam1.Scenes
             var parts = new Sprite[4];
             for (int i = 0; i < 4; i++)
             {
-                parts[i] = new Sprite(new TextureRegion2D(Scene.Tileset, TileSize * 7, TileSize * (7 - i), TileSize, TileSize))
+                parts[i] = new Sprite(new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 7, TileSize * (7 - i), TileSize, TileSize))
                 {
                     OriginNormalized = Vector2.Zero,
                 };
@@ -199,13 +201,16 @@ namespace mizjam1.Scenes
                 Parts = parts,
                 Collidable = true,
                 PartsMounted = 0,
-
+                Fire = new Sprite(new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 5, TileSize * 2, TileSize, TileSize))
+                {
+                    OriginNormalized = Vector2.Zero,
+                }
             };
             AddActor(bush, instantly);
         }
         internal void CreateBullet(bool instantly = false)
         {
-            var sprite = new Sprite(new TextureRegion2D(Scene.Tileset, TileSize * 5, TileSize * 4, TileSize, TileSize))
+            var sprite = new Sprite(new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 5, TileSize * 4, TileSize, TileSize))
             {
                 OriginNormalized = new Vector2(0, 0),
                 Depth = 0.7f,
@@ -220,14 +225,14 @@ namespace mizjam1.Scenes
         private Vector2 FindEmptyPosition(bool centered = false)
         {
             Vector2 pos;
-            if (centered && Dungeon.SafePoints.Any(p => p.X > GridSize / 3 && p.X < GridSize * 2 / 3 && p.Y > GridSize / 3 && p.Y < GridSize * 2 / 3))
+            if (centered && Dungeon.SafePoints.Any(p => !Actors.Any(a => a.Position.X == TileSize * p.X && a.Position.Y == TileSize * p.Y) && p.X > GridSize / 3 && p.X < GridSize * 2 / 3 && p.Y > GridSize / 3 && p.Y < GridSize * 2 / 3))
             {
-                var p = Dungeon.SafePoints.Where(p => p.X > GridSize / 3 && p.X < GridSize * 2 / 3 && p.Y > GridSize / 3 && p.Y < GridSize * 2 / 3).GetRandom();
+                var p = Dungeon.SafePoints.Where(p => !Actors.Any(a => a.Position.X == TileSize * p.X && a.Position.Y == TileSize * p.Y) && p.X > GridSize / 3 && p.X < GridSize * 2 / 3 && p.Y > GridSize / 3 && p.Y < GridSize * 2 / 3).GetRandom();
                 pos = new Vector2(TileSize * p.X, TileSize * p.Y);
             }
-            else if (Dungeon.SafePoints.Any())
+            else if (Dungeon.SafePoints.Any(p => !Actors.Any(a => a.Position.X == TileSize * p.X && a.Position.Y == TileSize * p.Y) && p.X > 0 && p.X < GridSize - 1 && p.Y > 0 && p.Y < GridSize - 1))
             {
-                var p = Dungeon.SafePoints.GetRandom();
+                var p = Dungeon.SafePoints.Where(p => !Actors.Any(a => a.Position.X == TileSize * p.X && a.Position.Y == TileSize * p.Y) && p.X > 0 && p.X < GridSize - 1 && p.Y > 0 && p.Y < GridSize - 1).GetRandom();
                 pos = new Vector2(TileSize * p.X, TileSize * p.Y);
                 //Dungeon.SafePoints.Remove(p);
             }
@@ -240,7 +245,7 @@ namespace mizjam1.Scenes
                 {
                     x = (int)(GridSize * RandomHelper.NextFloat());
                     y = (int)(GridSize * RandomHelper.NextFloat());
-                } while (Dungeon.Grid[x, y] && !Actors.Any(a => a.Position.X == x * TileSize && a.Position.Y * TileSize == y));
+                } while (Dungeon.Grid[x, y] || Actors.Any(a => a.Position.X == TileSize * x && a.Position.Y == TileSize * y));
 
                 pos = new Vector2(TileSize * x, TileSize * y);
             }
@@ -250,19 +255,7 @@ namespace mizjam1.Scenes
 
         internal void CreatePlayer(bool instantly = false)
         {
-            Player = new Player
-            {
-                Position = FindEmptyPosition(),
-                Animations = Animation.GetPigAnimation(Scene.Tileset),
-                Moveable = true,
-                Controllable = true,
-                PlayerControllable = true,
-                Animated = true,
-                Collidable = true,
-                CanShoot = true,
-                CollisionGroup = 0b01,
-                CollidesWith = 0b01,
-            };
+            Player = new Player(FindEmptyPosition(true));
             AddActor(Player, instantly);
             Scene.LastCameraPos = GetCameraPosition();
         }
@@ -270,8 +263,8 @@ namespace mizjam1.Scenes
         {
             var farmer = new Farmer(Player)
             {
-                Position = FindEmptyPosition(),
-                Animations = Animation.GetFarmerAnimation(Scene.Tileset),
+                Position = FindEmptyPosition(true),
+                Animations = Animation.GetFarmerAnimation(ContentLoader.Instance.Tileset),
                 Moveable = true,
                 Controllable = true,
                 Animated = true,
@@ -288,7 +281,7 @@ namespace mizjam1.Scenes
             {
                 Position = position,
                 AnimationState = "UNWATERED",
-                Animations = Animation.GetCropAnimation(Scene.Tileset),
+                Animations = Animation.GetCropAnimation(ContentLoader.Instance.Tileset),
                 Animated = true,
                 Interactive = true
             };
@@ -297,7 +290,7 @@ namespace mizjam1.Scenes
 
         internal void CreateCarrot(Vector2 position, bool instantly = false)
         {
-            var sprite = new Sprite(new TextureRegion2D(Scene.Tileset, TileSize * 7, TileSize * 0, TileSize, TileSize))
+            var sprite = new Sprite(new TextureRegion2D(ContentLoader.Instance.Tileset, TileSize * 7, TileSize * 0, TileSize, TileSize))
             {
                 OriginNormalized = Vector2.Zero,
                 Depth = 0.6f,
@@ -311,7 +304,7 @@ namespace mizjam1.Scenes
             var particle = new Particle
             {
                 Position = position,
-                Animations = Animation.GetSplashAnimation(Scene.Tileset),
+                Animations = Animation.GetSplashAnimation(ContentLoader.Instance.Tileset),
                 Animated = true
             };
             AddActor(particle, instantly);
@@ -322,7 +315,7 @@ namespace mizjam1.Scenes
             var particle = new Particle
             {
                 Position = position,
-                Animations = Animation.GetSeedAnimation(Scene.Tileset),
+                Animations = Animation.GetSeedAnimation(ContentLoader.Instance.Tileset),
                 Animated = true
             };
             AddActor(particle, instantly);
@@ -333,7 +326,7 @@ namespace mizjam1.Scenes
             var particle = new Particle
             {
                 Position = position,
-                Animations = Animation.GetPickUpAnimation(Scene.Tileset),
+                Animations = Animation.GetPickUpAnimation(ContentLoader.Instance.Tileset),
                 Animated = true
             };
             AddActor(particle, instantly);
@@ -365,6 +358,10 @@ namespace mizjam1.Scenes
             }
 
             float bottomSide = -GridSize * TileSize * Scene.Camera.Zoom + center.Y * 2;
+            if (GridSize * TileSize * Scene.Camera.Zoom < Scene.ViewportAdapter.BoundingRectangle.Height)
+            {
+                bottomSide += 64;
+            }
             if (Scene.ViewportAdapter.BoundingRectangle.Height > GridSize * TileSize * Scene.Camera.Zoom)
             {
                 camPos.Y = bottomSide / 2;
@@ -412,7 +409,7 @@ namespace mizjam1.Scenes
                 }
             }
             //FIXME: LoadBeforehand
-            var arrow = new TextureRegion2D(Scene.Tileset, 7 * TileSize, 2 * TileSize, TileSize, TileSize);
+            var arrow = new TextureRegion2D(ContentLoader.Instance.Tileset, 7 * TileSize, 2 * TileSize, TileSize, TileSize);
             for (int i = 0; i < 4; i++)
             {
                 if (Dungeon.Openings[i])
