@@ -63,11 +63,19 @@ namespace mizjam1.Actors
                 ship.Collidable = false;
                 Collidable = false;
                 WalkAcceleration = 10;
-                if ((ship.Position - Position).LengthSquared() > Size)
+                var diff = ship.Position - Position;
+                if (diff.LengthSquared() > Size / 2)
                 {
                     GoTowards(ship.Position, false, 0);
+                    diff.Normalize();
+                    Speed = diff * MaxSpeed / 2f;
+                    FlipX = Speed.X < 0;
                     SoundPlayer.Instance.SetWin();
-                    if (SoundPlayer.Instance.IsSongEnded())
+                    if (!SoundPlayer.Instance.IsMuted && SoundPlayer.Instance.IsSongEnded())
+                    {
+                        Scene.Win();
+                    }
+                    else if (SoundPlayer.Instance.IsMuted && ship.Position.Y < -Size * 2)
                     {
                         Scene.Win();
                     }
@@ -104,9 +112,11 @@ namespace mizjam1.Actors
                 }
                 return;
             }
+            var dist2 = Size * 1.5f;
+            dist2 *= dist2;
             if (CanTeleport)
             {
-                foreach (Teleporter t in Scene.GetActors().Where(c => c is Teleporter && (c.Position - Position).LengthSquared() < Size * Size))
+                foreach (Teleporter t in Scene.GetActors().Where(c => c is Teleporter && (c.Position - Position).LengthSquared() < dist2))
                 {
                     t.Teleport();
                     CanTeleport = false;
@@ -115,7 +125,7 @@ namespace mizjam1.Actors
             }
             if (Scene != null)
             {
-                foreach (Carrot c in Scene.GetActors().Where(c => c is Carrot carrot && carrot.CanBeCollected() && (c.Position - Position).LengthSquared() < Size * Size))
+                foreach (Carrot c in Scene.GetActors().Where(c => c is Carrot carrot && carrot.CanBeCollected() && (c.Position - Position).LengthSquared() < dist2))
                 {
                     Scene.CreatePickUpParticle(c.Position);
                     SoundPlayer.Instance.Play("PICK");
@@ -123,7 +133,7 @@ namespace mizjam1.Actors
                     CarrotCollected = true;
                     Scene.RemoveActor(c);
                 }
-                foreach (ShipPart c in Scene.GetActors().Where(c => c is ShipPart carrot && (c.Position - Position).LengthSquared() < Size * Size))
+                foreach (ShipPart c in Scene.GetActors().Where(c => c is ShipPart carrot && (c.Position - Position).LengthSquared() < dist2))
                 {
                     PartCollected = true;
                     Scene.CreatePickUpParticle(c.Position);
@@ -143,7 +153,7 @@ namespace mizjam1.Actors
                 Health++;
                 Healing = false;
                 Healed = true;
-                
+
                 Scene.CreateSeedParticle(Position);
                 //TODO: Add sound
             }
@@ -152,7 +162,7 @@ namespace mizjam1.Actors
         }
         internal void Interaction()
         {
-            if (!DoInteraction)
+            if (!DoInteraction || Scene == null)
             {
                 return;
             }
@@ -199,7 +209,7 @@ namespace mizjam1.Actors
         }
         private void ShipAction()
         {
-            if (!DoShipAction)
+            if (!DoShipAction || Scene == null)
             {
                 return;
             }

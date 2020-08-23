@@ -126,7 +126,7 @@ namespace mizjam1.UI
             //DrawText(spriteBatch, "bushes and the well", size, 4 * size);
 
 
-            if (Player.Died)
+            if (Player.Health <= 0)
             {
                 DrawText(spriteBatch, "game over", size, 3 * size);
                 return;
@@ -170,22 +170,23 @@ namespace mizjam1.UI
             else if (!Player.Teleported)
             {
                 DrawText(spriteBatch, "move towards the arrows", size, 3 * size);
-                DrawText(spriteBatch, "explore the world", size, 4 * size);
+                DrawText(spriteBatch, "explore the world", size, 4 * size, true);
+                DrawText(spriteBatch, "remember where you started", size, 5 * size, true);
             }
             else if (!Player.Attacked)
             {
                 DrawText(spriteBatch, "press J to attack while moving", size, 3 * size);
-                DrawText(spriteBatch, "it costs a carrot", size, 4 * size);
+                DrawText(spriteBatch, "it costs a carrot", size, 4 * size, true);
             }
             else if (Player.TakenDamage && !Player.Healed)
             {
                 DrawText(spriteBatch, "press H to heal", size, 3 * size);
-                DrawText(spriteBatch, "it costs four carrots", size, 4 * size);
+                DrawText(spriteBatch, "it costs four carrots", size, 4 * size, true);
             }
 
         }
 
-        private void DrawText(SpriteBatch spriteBatch, string text, int size, float height)
+        private void DrawText(SpriteBatch spriteBatch, string text, int size, float height, bool shortTop = false)
         {
             if (Player.Position.Y > size)
             {
@@ -195,10 +196,18 @@ namespace mizjam1.UI
                 var strWidth = Font.MeasureString(text).Width;
                 var p = new Vector2(xOffset - strWidth / 2, height);
                 spriteBatch.DrawString(Font, str, p, Color.White, 0, Vector2.Zero, Vector2.One, SpriteEffects.None, 1);
-                var bgColor = new Color(dark, dark, dark, 0.85f);
+                var bgColor = new Color(dark, dark, dark, 0.75f);
                 var start = xOffset - strWidth / 2 - size * 0.5f;
                 var end = strWidth + size;
-                spriteBatch.FillRectangle(start, height - 0.5f * size, end, size * 1.5f, bgColor, 0);
+
+                float startY = height;
+                float endY = size;
+                if (!shortTop)
+                {
+                    startY -= 0.5f * size;
+                    endY *= 1.5f;
+                }
+                spriteBatch.FillRectangle(start, startY, end, endY, bgColor, 0);
             }
         }
     }

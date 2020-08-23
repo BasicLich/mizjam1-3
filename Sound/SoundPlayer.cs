@@ -92,13 +92,22 @@ namespace mizjam1.Sound
             Queues[name].Enqueue(Sounds[name].CreateInstance());
         }
         
+        public void UnqueueAll()
+        {
+            foreach (var q in Queues.Values)
+            {
+                q.Clear();
+            } 
+        }
         public void Toggle()
         {
             if (IsMuted)
             {
+                UnqueueAll();
                 Unmute();
             } else
             {
+                UnqueueAll();
                 Mute();
             }
         }

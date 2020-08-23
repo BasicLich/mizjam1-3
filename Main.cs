@@ -34,7 +34,9 @@ namespace mizjam1
             _graphics.PreferredBackBufferWidth = 16 * 16 * 2;
             _graphics.PreferredBackBufferHeight = 16 * 16 * 2 + 64;
             _graphics.ApplyChanges();
-            NewMenu();
+
+            Scene = new IntroScene();
+            Scene.Initialize(Window, GraphicsDevice, Content, this);
             base.Initialize();
 
             Scene.ViewportAdapter.Reset();
@@ -42,6 +44,11 @@ namespace mizjam1
 
         protected override void LoadContent()
         {
+        }
+
+        internal void ToggleFullScreen()
+        {
+            _graphics.ToggleFullScreen();
         }
 
         internal void NewEasyGame()
@@ -75,7 +82,7 @@ namespace mizjam1
 
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             {
-                Exit();
+                NewMenu();
             }
             if (Input.IsKeyJustPressed(Keys.R))
             {

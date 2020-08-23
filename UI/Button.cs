@@ -25,7 +25,16 @@ namespace mizjam1.UI
         internal Player Player;
         internal bool PlaySound = true;
 
+        internal float CollideTimer = 0;
+        internal float CollideTime = 0.5f;
+        internal bool Colliding = false;
+
         internal bool DrawBorder;
+
+        internal float WaitTimer = 0;
+        internal float WaitTime = 0.5f;
+
+        internal Color Color = Color.White;
 
         internal Button(GameWindow window, string text, float height, float size, Action onCollide, Player player, bool drawBorder = true)
         {
@@ -50,26 +59,70 @@ namespace mizjam1.UI
         {
             float xOffset = Window.ClientBounds.Width / 2f;
             Position = new Vector2(xOffset, Height);
-            Bounds = new RectangleF(
-                            Position.X + Size * (-Text.Length / 2f - 0.5f),
-                            Position.Y - Size * 0.5f,
-                            Size * (Text.Length + 1),
-                            Size * 2);
-
-            if (Bounds.Contains(Player.Position + new Vector2(Size * Scale / 2f, Size * Scale / 2f)))
+            if (DrawBorder)
             {
-                Collide();
+                Bounds = new RectangleF(
+                                Position.X + Size * (-Text.Length / 2f - 0.5f),
+                                Position.Y - Size * 0.5f,
+                                Size * (Text.Length + 1),
+                                Size * 2);
+            } else
+            {
+                Bounds = new RectangleF(
+                                Position.X + Size * (-Text.Length / 2f - 0.5f),
+                                Position.Y,
+                                Size * (Text.Length + 1),
+                                Size);
 
             }
+            if (Player == null)
+            {
+                return;
+            }
+            WaitTimer += gameTime.GetElapsedSeconds();
+
             var m = Mouse.GetState();
-            
-            if (m.LeftButton == ButtonState.Pressed && Bounds.Contains(new Point(m.X, m.Y)))
+
+            if (Bounds.Contains(new Point(m.X, m.Y)))
             {
-                Collide();
+                Color = new Color(255 / 255f,200 / 255f, 37 / 255f);
             }
+            else
+            {
+                Color = Color.White;
+            }
+            if (!Colliding && WaitTimer > WaitTime)
+            {
+                if (Bounds.Contains(Player.Position + new Vector2(Size * Scale / 2f, Size * Scale / 2f)))
+                {
+                    Collide();
+                    return;
+                }
+
+                if (m.LeftButton == ButtonState.Pressed && Bounds.Contains(new Point(m.X, m.Y)))
+                {
+                    Collide();
+                    return;
+                }
+            }
+            else
+            {
+                CollideTimer += gameTime.GetElapsedSeconds();
+                if (CollideTime < CollideTimer)
+                {
+                    CollideTimer = 0;
+                    Colliding = false;
+                }
+                else
+                {
+                    Colliding = true;
+                }
+            }
+
         }
         internal void Collide()
         {
+            Colliding = true;
             if (PlaySound)
             {
                 SoundPlayer.Instance.Play("PICK");
@@ -89,13 +142,13 @@ namespace mizjam1.UI
                 {
                     var x = i == start ? 0 : i < (end - 1) ? 1 : 2;
 
-                    spriteBatch.Draw(ContentLoader.Instance.Border9Path[x, 0], Position + new Vector2(Size * i, Size * -1f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0.5f);
-                    spriteBatch.Draw(ContentLoader.Instance.Border9Path[x, 1], Position + new Vector2(Size * i, Size * 0f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0.5f);
-                    spriteBatch.Draw(ContentLoader.Instance.Border9Path[x, 2], Position + new Vector2(Size * i, Size * 1f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0.5f);
+                    spriteBatch.Draw(ContentLoader.Instance.Border9Path[x, 0], Position + new Vector2(Size * i, Size * -1f), Color, 0, Vector2.Zero, scale, SpriteEffects.None, 0.5f);
+                    spriteBatch.Draw(ContentLoader.Instance.Border9Path[x, 1], Position + new Vector2(Size * i, Size * 0f), Color, 0, Vector2.Zero, scale, SpriteEffects.None, 0.5f);
+                    spriteBatch.Draw(ContentLoader.Instance.Border9Path[x, 2], Position + new Vector2(Size * i, Size * 1f), Color, 0, Vector2.Zero, scale, SpriteEffects.None, 0.5f);
                 }
             }
 
-            spriteBatch.DrawString(ContentLoader.Instance.Font, Text, Position + new Vector2((start + 1) * Size, 0), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 1);
+            spriteBatch.DrawString(ContentLoader.Instance.Font, Text, Position + new Vector2((start + 1) * Size, 0), Color, 0, Vector2.Zero, scale, SpriteEffects.None, 1);
 
             //var m = Mouse.GetState();
             //spriteBatch.DrawCircle(m.X, m.Y, 16, 16, Color.Red);

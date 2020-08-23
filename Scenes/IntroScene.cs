@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using mizjam1.Actors;
 using mizjam1.ContentLoaders;
 using mizjam1.Helpers;
@@ -18,40 +19,20 @@ using System.Threading;
 
 namespace mizjam1.Scenes
 {
-    internal class MenuScene : Scene
+    internal class IntroScene : Scene
     {
         internal int Size = 32;
         internal List<Actor> Actors;
-        internal Player Player;
         internal float SoundTimer = 0;
         internal float SoundTime = 0.5f;
         internal bool CanPlay = true;
         internal Color BgColor = new Color(14 / 255f, 7 / 255f, 27 / 255f);
-        internal Button Mute;
+        internal float Timer = 0;
+        internal float Time = 10;
         internal List<Point> Stars;
         public override void Initialize(GameWindow window, GraphicsDevice graphicsDevice, ContentManager content, Main main)
         {
             base.Initialize(window, graphicsDevice, content, main);
-            SoundPlayer.Instance.SetTheme();
-            Player = new Player(new Vector2(50, 100))
-            {
-                BorderCollide = false,
-                CanTeleport = false,
-                Scale = 3,
-                MaxSpeed = 100,
-            };
-            Mute = new Button(window, "sound on", Size * 12f, Size, Toggle, Player, false);
-            Actors = new List<Actor>
-            {
-                new Button(window, "star pig", Size * 1, Size * 2f, PlayPig, Player, false) { PlaySound = false },
-                new Button(window, "easy", Size * 4, Size, Game.NewEasyGame, Player),
-                new Button(window, "normal", Size * 6.5f, Size, Game.NewNormalGame, Player),
-                new Button(window, "hard", Size * 9, Size, Game.NewHardGame, Player),
-                Mute,                
-                new Button(window, "full screen", Size * 13.5f, Size, Game.ToggleFullScreen, Player, false),
-                new Button(window, "exit", Size * 16, Size, Game.Exit, Player, false),
-                Player,
-            };
 
             Stars = new List<Point>();
             for (int i = 0; i < Window.ClientBounds.Width / 10; i++)
@@ -61,6 +42,19 @@ namespace mizjam1.Scenes
                 Stars.Add(new Point(x, y));
             }
             Window.ClientSizeChanged += Window_ClientSizeChanged;
+
+            Actors = new List<Actor>
+            {
+                new Button(window, "star pig", Size * 1, Size * 1.5f, PlayPig, null, false) { PlaySound = false },
+                new Button(window, "your rocket crashed in a forest", Size * 4, Size / 2, PlayPig, null, false) { PlaySound = false },
+                new Button(window, "you have to assemble it back", Size * 5, Size / 2, PlayPig, null, false) { PlaySound = false },
+                new Button(window, "farmers have mistaken you for a", Size * 7, Size / 2, PlayPig, null, false) { PlaySound = false },
+                new Button(window, "pig and will try to capture you", Size * 8, Size / 2, PlayPig, null, false) { PlaySound = false },
+                new Button(window, "luckily you found an edible", Size * 10, Size / 2, PlayPig, null, false) { PlaySound = false },
+                new Button(window, "plant that can boost your power", Size * 11, Size / 2, PlayPig, null, false) { PlaySound = false },
+                new Button(window, "click", Size * 13, Size, PlayPig, null, false) { PlaySound = false },
+            };
+
         }
 
         private void Window_ClientSizeChanged(object sender, EventArgs e)
@@ -73,18 +67,6 @@ namespace mizjam1.Scenes
                 Stars.Add(new Point(x, y));
             }
         }
-        internal void Toggle()
-        {
-            SoundPlayer.Instance.Toggle();
-            if (SoundPlayer.Instance.IsMuted)
-            {
-                Mute.Text = "sound off";
-            } else
-            {
-                Mute.Text = "sound on";
-            }
-        }
-
 
         internal void PlayPig()
         {
@@ -101,6 +83,7 @@ namespace mizjam1.Scenes
 
             SpriteBatch.Begin(samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.FrontToBack);
 
+            
             foreach (var p in Stars)
             {
                 SpriteBatch.DrawPoint(p.X, p.Y, Color.White, 2);
@@ -114,16 +97,25 @@ namespace mizjam1.Scenes
 
         public override void Update(GameTime gameTime)
         {
+            var delta = gameTime.GetElapsedSeconds();
             if (!CanPlay)
             {
-                SoundTimer += gameTime.GetElapsedSeconds();
+                SoundTimer += delta;
                 if (SoundTimer > SoundTime)
                 {
                     CanPlay = true;
                     SoundTimer = 0;
                 }
             }
+
             Actors.ForEach(b => b.Update(gameTime));
+
+            Time += delta;
+            if (Timer > Time || Keyboard.GetState().GetPressedKeyCount() > 0 || Mouse.GetState().LeftButton == ButtonState.Pressed)
+            {
+                Game.NewMenu();
+            }
+
             for (int i = 0; i < Stars.Count; i++)
             {
                 Point p = Stars[i];

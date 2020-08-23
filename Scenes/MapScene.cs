@@ -45,8 +45,8 @@ namespace mizjam1.Scenes
         public override void Initialize(GameWindow window, GraphicsDevice graphicsDevice, ContentManager content, Main main)
         {
             base.Initialize(window, graphicsDevice, content, main);
-
             var numbers = new List<TextureRegion2D>();
+            Crop.IsFirst = true;
             for (int i = 0; i < 10; i++)
             {
                 numbers.Add(new TextureRegion2D(ContentLoader.Instance.Numbers, TileSize * i, 0, TileSize, TileSize));

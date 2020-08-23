@@ -31,11 +31,11 @@ namespace mizjam1.Helpers
             } while (Openings.Count(o => o) < 2);
 
             int attempts = 0;
-            //do
-            //{
+            do
+            {
                 Generate();
                 attempts++;
-            //} while (!HasConnectivity());
+            } while (!HasConnectivity());
             var connectivity = HasConnectivity();
         }
 

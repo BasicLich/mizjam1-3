@@ -51,6 +51,9 @@ namespace mizjam1.Scenes
             {
                 CreatePlayer(true);
             }
+            NBushes += (int)(RandomHelper.NextFloat() * 5);
+            NBushes -= farmers;
+            NBushes = Math.Max(1, NBushes);
             CreateBushes(true);
             if (createPlayer)
             {
@@ -62,12 +65,11 @@ namespace mizjam1.Scenes
             {
                 CreateShipPart(FindEmptyPosition(), shipPart, true);
             }
-            NBushes += (int)(RandomHelper.NextFloat() * 5);
             if (!createPlayer)
             {
                 for (int i = 0; i < farmers + (int) (RandomHelper.NextFloat() * (farmers + 1)); i++)
                 {
-                    CreateFarmer(true);
+                    CreateFarmer(farmers == 1, true);
                 }
             }
         }
@@ -259,7 +261,7 @@ namespace mizjam1.Scenes
             AddActor(Player, instantly);
             Scene.LastCameraPos = GetCameraPosition();
         }
-        internal void CreateFarmer(bool instantly = false)
+        internal void CreateFarmer(bool easy, bool instantly = false)
         {
             var farmer = new Farmer(Player)
             {
@@ -272,6 +274,13 @@ namespace mizjam1.Scenes
                 CollisionGroup = 0b11,
                 CollidesWith = 0b01,
             };
+            if (easy)
+            {
+                farmer.MaxSpeed *= 0.5f;
+            } else
+            {
+                farmer.MaxSpeed *= 0.75f;
+            }
             AddActor(farmer, instantly);
         }
 

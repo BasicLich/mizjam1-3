@@ -32,7 +32,6 @@ namespace mizjam1.Actors
         {
             Player = player;
             Controllable = true;
-            MaxSpeed = MaxSpeed * 0.5f;
             //IsChicken = true;
         }
 

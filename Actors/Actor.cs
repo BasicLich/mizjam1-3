@@ -75,10 +75,10 @@ namespace mizjam1.Actors
 
                 if (PlayerControllable)
                 {
-                    Left = Input.IsKeyDown(Keys.A);
-                    Right = Input.IsKeyDown(Keys.D);
-                    Up = Input.IsKeyDown(Keys.W);
-                    Down = Input.IsKeyDown(Keys.S);
+                    Left = Input.IsKeyDown(Keys.A) || Input.IsKeyDown(Keys.Left);
+                    Right = Input.IsKeyDown(Keys.D) || Input.IsKeyDown(Keys.Right);
+                    Up = Input.IsKeyDown(Keys.W) || Input.IsKeyDown(Keys.Up);
+                    Down = Input.IsKeyDown(Keys.S) || Input.IsKeyDown(Keys.Down);
                 }
                 else
                 {
@@ -119,7 +119,10 @@ namespace mizjam1.Actors
         }
         internal virtual void Control()
         {
-
+            if (!PlayerControllable)
+            {
+                return;
+            }
             if (Left)
             {
                 FlipX = true;
@@ -276,7 +279,7 @@ namespace mizjam1.Actors
             {
                 return false;
             }
-            
+
             foreach (var actor in Scene.GetActors().Where(a => a.Collidable && ((a.CollisionGroup & CollidesWith) > 0) && a != this))
             {
                 var diff = actor.Position - position;
