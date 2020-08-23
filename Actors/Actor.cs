@@ -119,10 +119,6 @@ namespace mizjam1.Actors
         }
         internal virtual void Control()
         {
-            if (!PlayerControllable)
-            {
-                return;
-            }
             if (Left)
             {
                 FlipX = true;

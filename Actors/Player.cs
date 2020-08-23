@@ -116,7 +116,7 @@ namespace mizjam1.Actors
             dist2 *= dist2;
             if (CanTeleport)
             {
-                foreach (Teleporter t in Scene.GetActors().Where(c => c is Teleporter && (c.Position - Position).LengthSquared() < dist2))
+                foreach (Teleporter t in Scene.GetActors().Where(c => c is Teleporter && (c.Position - Position).LengthSquared() < Size * Size))
                 {
                     t.Teleport();
                     CanTeleport = false;
